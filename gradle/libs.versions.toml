@@ -6,7 +6,7 @@ ftcSdk = "12.0.0"
 androidxAnnotation = "1.9.1"
 # --- Libraries ---
 junit = "5.11.4"
-mockito = "5.14.2"
+mockito = "5.24.0"
 archunit = "1.3.0"
 # --- Plugins ---
 spotbugsPlugin = "6.4.2"
