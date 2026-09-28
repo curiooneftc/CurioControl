@@ -1,0 +1,49 @@
+name: Question
+description: Ask how to use CurioControl
+labels: [question]
+
+body:
+  - type: textarea
+    id: question
+    attributes:
+      label: What are you trying to do?
+      description: Describe the goal, not just the API call. The goal is usually what tells us which part of the docs answers it.
+    validations:
+      required: true
+
+  - type: textarea
+    id: code
+    attributes:
+      label: Relevant code
+      description: The OpMode, subsystem, or configuration involved.
+      render: java
+
+  - type: input
+    id: curio-version
+    attributes:
+      label: CurioControl version
+      placeholder: 0.1.0
+    validations:
+      required: true
+
+  - type: input
+    id: sdk-version
+    attributes:
+      label: FTC SDK / Robot Controller version
+      placeholder: 12.0.0
+    validations:
+      required: true
+
+  - type: dropdown
+    id: searched
+    attributes:
+      label: Where have you looked?
+      options:
+        - The guides in the docs site
+        - The Javadoc
+        - `spec.md`
+        - `PHASES.md`
+        - Existing issues and discussions
+        - Nowhere yet
+    validations:
+      required: true

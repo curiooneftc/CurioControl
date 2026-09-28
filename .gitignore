@@ -1,0 +1,52 @@
+# --- Gradle -------------------------------------------------------------------
+.gradle/
+!gradle/wrapper/gradle-wrapper.jar
+build/
+buildSrc/build/
+!gradle/wrapper/gradle-wrapper.properties
+.gradletasknamecache
+
+# --- Local configuration and secrets (SPEC §44) --------------------------------
+# Never commit credentials. Use ~/.gradle/gradle.properties or environment variables.
+gradle.properties.local
+local.properties
+*.keystore
+*.jks
+.env
+.env.*
+
+# --- Java / Android -----------------------------------------------------------
+*.class
+*.log
+hs_err_pid*
+replay_pid*
+*.apk
+*.aab
+*.aar
+captures/
+.externalNativeBuild/
+.cxx/
+
+# --- IDEs ---------------------------------------------------------------------
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+.vscode/
+!.vscode/settings.json
+!.vscode/extensions.json
+.project
+.classpath
+.settings/
+bin/
+
+# --- Docs ---------------------------------------------------------------------
+/site/
+/docs/javadoc/
+.mike/
+
+# --- OS -----------------------------------------------------------------------
+.DS_Store
+Thumbs.db
+desktop.ini

@@ -1,0 +1,89 @@
+name: Bug report
+description: Something in CurioControl does not work as documented
+labels: [bug, needs-triage]
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        A good bug report makes the problem reproducible. Please fill in as much as you can —
+        a half-filled report is much harder to act on than a complete one.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What you observed. Include the exact error message if there was one.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect instead?
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: |
+        1.
+        2.
+        3.
+      placeholder: |
+        1. Add the dependency to a fresh FTC project.
+        2. Run a TeleOp that calls robot.drive().mecanum(...).
+        3. Push the left stick fully forward.
+    validations:
+      required: true
+
+  - type: textarea
+    id: code
+    attributes:
+      label: Relevant code
+      description: The OpMode, subsystem, or configuration involved. A minimal example is ideal.
+    render: java
+
+  - type: input
+    id: curio-version
+    attributes:
+      label: CurioControl version
+      description: The exact pinned version, not "latest".
+      placeholder: 0.1.0
+    validations:
+      required: true
+
+  - type: input
+    id: sdk-version
+    attributes:
+      label: FTC SDK / Robot Controller version
+      description: Settings → About on the Robot Controller.
+      placeholder: 12.0.0
+    validations:
+      required: true
+
+  - type: input
+    id: java-version
+    attributes:
+      label: Java version
+      placeholder: 17
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Telemetry or log output
+      description: Anything the robot printed, including the `[CurioControl]` error block if there was one.
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I searched the existing issues and this is not a duplicate
+          required: true
+        - label: I am using a pinned release, not an unreleased build
+        - label: I can reproduce this on a second robot or a fresh project

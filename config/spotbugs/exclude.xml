@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  SpotBugs exclusions for CurioControl.
+
+  Only intentional, documented patterns belong here. Anything added must state why the
+  finding is a false positive or an accepted trade-off. See docs/CI_CD_SETUP.md §5.
+-->
+<FindBugsFilter
+        xmlns="https://github.com/spotbugs/filter/3.0.0"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="https://github.com/spotbugs/filter/3.0.0 https://raw.githubusercontent.com/spotbugs/spotbugs/master/spotbugs/etc/findbugsfilter.xsd">
+
+    <!-- Tests: readability and defensive-coding findings are noise in test code. -->
+    <Match>
+        <Source name="~.*[\\/]src[\\/]test[\\/].*"/>
+        <Or>
+            <Bug pattern="DM_DEFAULT_ENCODING"/>
+            <Bug pattern="DM_EXIT"/>
+            <Bug pattern="DM_GC"/>
+            <Bug pattern="DM_STRING_VOID_CTOR"/>
+            <Bug pattern="DM_STRING_TOSTRING"/>
+            <Bug pattern="MS_EXPOSE_REP"/>
+            <Bug pattern="MS_SHOULD_BE_FINAL"/>
+            <Bug pattern="NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE"/>
+            <Bug pattern="RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE"/>
+            <Bug pattern="SIC_INNER_SHOULD_BE_STATIC"/>
+            <Bug pattern="UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR"/>
+            <Bug pattern="URF_UNREAD_FIELD"/>
+        </Or>
+    </Match>
+
+    <!--
+      Mockito mocks of FTC SDK types. SDK classes are not designed to be implemented, and
+      the tests are exercising the wrapper's own delegation logic (TESTING_STRATEGY.md §3.2).
+    -->
+    <Match>
+        <Source name="~.*[\\/]src[\\/]test[\\/].*"/>
+        <Or>
+            <Bug pattern="EI_EXPOSE_REP"/>
+            <Bug pattern="EI_EXPOSE_REP2"/>
+            <Bug pattern="EQ_OVERRIDING_EQUALS_NOT_SYMMETRIC"/>
+            <Bug pattern="SE_BAD_FIELD"/>
+            <Bug pattern="SE_NO_SERIALVERSIONID"/>
+        </Or>
+    </Match>
+
+    <!--
+      A CLI entry point legitimately discards the result of System.exit when running under
+      Gradle's Exec tasks. Nothing in this project ships a main() method yet; this rule is
+      here so it does not have to be re-derived later.
+    -->
+    <Match>
+        <Class name="~dev\.curio\.control\.util\.Cli"/>
+    </Match>
+</FindBugsFilter>

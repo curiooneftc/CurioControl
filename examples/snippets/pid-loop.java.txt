@@ -1,0 +1,48 @@
+// Copy-paste fragment: a closed-loop PID position controller on a lift or arm.
+//
+// The controller takes two numbers and knows nothing about motors, which is what makes it
+// testable without a robot. See docs/guides/control-tuning.md for the tuning order.
+
+import org.curioone.control.control.PIDController;
+
+public final class LiftController {
+
+    private final PIDController pid = new PIDController(0.01, 0.0, 0.001);
+
+    private final Motor motor;
+
+    private int targetTicks;
+
+    public LiftController(Motor motor) {
+        this.motor = motor;
+        motor.setRunMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        // Anti-windup. Without this, a long move at full power leaves the integrator charged
+        // and the lift overshoots badly on arrival.
+        pid.setOutputLimits(-1.0, 1.0);
+        pid.setIntegralLimit(0.25);
+        pid.setTolerance(2.0);
+    }
+
+    /** Sets the target position in encoder ticks. */
+    public void moveTo(int ticks) {
+        targetTicks = ticks;
+    }
+
+    /** Call once per OpMode loop. */
+    public void update() {
+        motor.setPower(pid.calculate(targetTicks, motor.getPosition()));
+    }
+
+    /** True when the lift is within tolerance and can hold position. */
+    public boolean atTarget() {
+        return pid.atSetpoint();
+    }
+
+    /** Call when the OpMode ends so the lift does not keep driving. */
+    public void stop() {
+        motor.setPower(0.0);
+        pid.reset();
+    }
+}
