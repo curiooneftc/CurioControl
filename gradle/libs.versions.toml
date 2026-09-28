@@ -11,7 +11,7 @@ archunit = "1.5.1"
 # --- Plugins ---
 spotbugsPlugin = "6.4.2"
 spotless = "8.10.3"
-develocity = "4.2.1"
+develocity = "4.6.0"
 foojayResolver = "1.0.0"
 
 [libraries]
