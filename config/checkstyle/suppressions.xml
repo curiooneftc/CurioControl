@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<!DOCTYPE suppressions PUBLIC
+    "-//Checkstyle//DTD SuppressionFilter Configuration 1.2//EN"
+    "https://checkstyle.org/dtds/suppressions_1_2.dtd">
+
+<!--
+  Targeted Checkstyle suppressions.
+
+  Every entry here is a deliberate, documented exception — never a way to silence a check that
+  is simply inconvenient. If an entry is no longer needed, delete it and fix the code.
+-->
+<suppressions>
+
+    <!--
+      CurioConfig is the framework's public configuration surface. SPEC §26 defines it as
+      public static flags that an OpMode assigns directly (CurioConfig.DEBUG = true), so the
+      private-field-with-accessor rule does not apply to it. No other class in CurioControl is
+      exempt: public instance state is banned everywhere else.
+    -->
+    <suppress checks="VisibilityModifier" files="[\\/]core[\\/]CurioConfig\.java$"/>
+
+    <!--
+      Test code: an unexplained literal is often the point of the assertion (a cadence of 200ms,
+      a position of 850 ticks). Naming every one of them would obscure the test rather than
+      clarify it. Production code is unaffected.
+    -->
+    <suppress checks="MagicNumber" files="[\\/]src[\\/]test[\\/]"/>
+
+</suppressions>

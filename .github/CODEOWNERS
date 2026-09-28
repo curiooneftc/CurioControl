@@ -1,0 +1,41 @@
+# Repository guidance for automated and human review.
+#
+# Replace `@dysshanks` with either your GitHub handle or a team handle. As teams are created
+# under Settings -> Teams, the per-area owners below can become team references.
+#
+# CAUTION: if a handle or team in this file does not exist, GitHub silently assigns nobody and
+# "Require review from Code Owners" becomes a no-op that still looks enabled in the settings UI.
+# After editing this file, confirm a reviewer actually appears on a test pull request.
+
+# Default owner for everything not matched below.
+*                       @dysshanks
+
+# Architectural boundaries. A change here can invalidate the layering rules or the public API
+# surface, so it needs a deliberate review, not just a passing build.
+src/main/java/org/curioone/control/core/       @dysshanks
+src/main/java/org/curioone/control/hardware/   @dysshanks
+src/main/java/org/curioone/control/drive/      @dysshanks
+src/main/java/org/curioone/control/math/       @dysshanks
+src/main/java/org/curioone/control/control/    @dysshanks
+src/main/java/org/curioone/control/util/       @dysshanks
+src/main/java/org/curioone/control/command/    @dysshanks
+src/main/java/org/curioone/control/telemetry/  @dysshanks
+src/main/java/org/curioone/control/vision/     @dysshanks
+
+# Build, CI, and publishing. A mistake here affects every consumer, and a mistake in the FTC
+# SDK unpacking fails the build for everyone at once rather than for one reviewer.
+build.gradle.kts                            @dysshanks
+buildSrc/                                   @dysshanks
+settings.gradle.kts                         @dysshanks
+gradle/                                     @dysshanks
+config/                                     @dysshanks
+.github/                                    @dysshanks
+
+# Architecture decisions. These govern everything else, so changes need explicit sign-off.
+ARCHITECTURE_DECISIONS.md                   @dysshanks
+docs/adr/                                   @dysshanks
+
+# Release-critical files.
+CHANGELOG.md                                @dysshanks
+RELEASE_STRATEGY.md                         @dysshanks
+LICENSE                                     @dysshanks

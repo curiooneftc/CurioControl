@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Question or discussion
+    url: https://github.com/curiooneftc/CurioControl/discussions
+    about: Ask how to use CurioControl, or propose an idea that is not yet ready for an issue.
+  - name: Roadmap
+    url: https://github.com/curiooneftc/CurioControl/blob/main/PHASES.md
+    about: Check whether the feature you want is already planned before opening a request.
+  - name: Contributing guide
+    url: https://github.com/curiooneftc/CurioControl/blob/main/CONTRIBUTING.md
+    about: Conventions, branch model, and the pull request workflow.

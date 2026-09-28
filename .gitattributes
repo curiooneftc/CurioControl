@@ -1,0 +1,37 @@
+# Normalize line endings on checkin, check out with the platform convention.
+#
+# This matters more than usual here: the team develops on Windows, CI runs on Linux, and
+# `gradlew` is a POSIX shell script. A CRLF line ending in gradlew is a hard failure on the
+# runner, and it is invisible on the machine that introduced it.
+
+* text=auto eol=lf
+
+# The Gradle wrapper scripts must be LF and executable, no exceptions.
+gradlew      text eol=lf
+gradlew.bat  text eol=crlf
+
+# Binary files: never touched.
+*.jar            binary
+*.aar            binary
+*.aab            binary
+*.apk            binary
+*.class          binary
+*.png            binary
+*.jpg            binary
+*.gif            binary
+*.zip            binary
+
+# Documentation and build config.
+*.md          text eol=lf
+*.txt         text eol=lf
+*.kts         text eol=lf
+*.toml        text eol=lf
+*.properties  text eol=lf
+*.xml         text eol=lf
+*.yml         text eol=lf
+*.yaml        text eol=lf
+*.kt          text eol=lf
+*.java        text eol=lf
+.gitignore    text eol=lf
+.gitattributes text eol=lf
+.editorconfig text eol=lf

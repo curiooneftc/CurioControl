@@ -1,0 +1,30 @@
+// Copy-paste fragment: field-centric mecanum drive.
+//
+// The heading is passed in as a number rather than read from an IMU inside the drive class.
+// That keeps `drive` free of SDK types and makes the rotation math testable without hardware.
+//
+// REMEMBER: reset the IMU heading at the start of every autonomous. A stale offset shows up as
+// a robot that consistently drifts a few degrees, which is easy to misread as a motor problem.
+
+@TeleOp(name = "Main TeleOp")
+public class MainTeleOp extends CurioOpMode {
+
+    private CurioRobot robot;
+
+    @Override
+    public void initRobot() {
+        robot = new CurioRobot(hardwareMap);
+        robot.imu().resetHeading();
+    }
+
+    @Override
+    public void runRobot() {
+        // "Forward" is now the field's forward, not the robot's, so the robot turns to face the
+        // way you push the stick regardless of which way it is currently pointing.
+        robot.drive().fieldCentric(
+                gamepad1.left_stick_x,
+                gamepad1.left_stick_y,
+                gamepad1.right_stick_x,
+                robot.imu().heading());
+    }
+}

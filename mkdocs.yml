@@ -1,0 +1,82 @@
+site_name: CurioControl
+site_description: A modular control and development framework for FIRST Tech Challenge robots
+site_url: https://curiooneftc.github.io/CurioControl/
+repo_url: https://github.com/curiooneftc/CurioControl
+repo_name: curiooneftc/CurioControl
+edit_uri: edit/main/docs/
+
+docs_dir: docs
+site_dir: site
+
+theme:
+  name: material
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.sections
+    - navigation.top
+    - content.code.copy
+    - content.code.annotate
+    - search.highlight
+    - search.suggest
+    - toc.follow
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - def_list
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - footnotes
+
+plugins:
+  - search
+
+nav:
+  - Home: index.md
+  - Getting started:
+      - Installation: getting-started/installation.md
+      - Quickstart: getting-started/quickstart.md
+      - Project setup: getting-started/project-setup.md
+  - Guides:
+      - Hardware abstraction: guides/hardware-abstraction.md
+      - Drivetrains: guides/drivetrains.md
+      - Control tuning: guides/control-tuning.md
+      - Robot config: guides/robot-config.md
+      - Telemetry and logging: guides/telemetry-and-logging.md
+  - Concepts:
+      - Architecture: concepts/architecture.md
+      - Philosophy: concepts/philosophy.md
+      - Hardware independence: concepts/hardware-independence.md
+      - FAQ: concepts/faq.md
+  - Reference:
+      - Configuration: reference/configuration.md
+      - Compatibility: reference/compatibility.md
+      - Migration: reference/migration.md
+  - Contributing:
+      - How to contribute: contributing/contributing-guide.md
+      - Testing: contributing/testing-guide.md
+  - Project:
+      - Architecture decisions: adr/README.md

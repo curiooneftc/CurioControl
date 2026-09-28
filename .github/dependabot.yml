@@ -1,0 +1,36 @@
+version: 2
+
+updates:
+  # Gradle, the FTC SDK, and every test and analysis tool version.
+  - package-ecosystem: gradle
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: 'build'
+    labels:
+      - dependencies
+      - gradle
+
+  # The build logic in buildSrc/ is Kotlin, so it needs the Kotlin ecosystem too.
+  - package-ecosystem: gradle
+    directory: /buildSrc
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 3
+    labels:
+      - dependencies
+      - build-logic
+
+  # GitHub Actions versions drift and are a common source of unexpected CI failures.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: 'ci'
+    labels:
+      - dependencies
+      - ci

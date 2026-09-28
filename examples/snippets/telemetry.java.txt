@@ -1,0 +1,34 @@
+// Copy-paste fragment: batched telemetry.
+//
+// `add()` buffers a value; `update()` flushes everything in one SDK call per loop. That is one
+// telemetry call per iteration instead of one per value, which matters on FTC hardware with a
+// tight loop budget.
+
+@TeleOp(name = "Main TeleOp")
+public class MainTeleOp extends CurioOpMode {
+
+    private CurioRobot robot;
+
+    @Override
+    public void initRobot() {
+        // Turn this on when debugging; the DEBUG category is suppressed otherwise.
+        CurioConfig.DEBUG = true;
+
+        robot = new CurioRobot(hardwareMap);
+    }
+
+    @Override
+    public void runRobot() {
+        robot.drive()
+                .mecanum(
+                        gamepad1.left_stick_x,
+                        gamepad1.left_stick_y,
+                        gamepad1.right_stick_x);
+
+        robot.telemetry()
+                .add("Heading", robot.imu().heading())
+                .add("Lift", lift.getPosition())
+                .add("Battery", voltageSensor.getVoltage())
+                .update();
+    }
+}

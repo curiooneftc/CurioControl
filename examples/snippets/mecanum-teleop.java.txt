@@ -1,0 +1,26 @@
+// Copy-paste fragment: a mecanum TeleOp.
+//
+// Drop this into a `CurioOpMode` subclass. The three axes are strafe, forward, and rotation;
+// the framework turns them into four motor powers with proper normalization.
+
+@TeleOp(name = "Main TeleOp")
+public class MainTeleOp extends CurioOpMode {
+
+    private CurioRobot robot;
+
+    @Override
+    public void initRobot() {
+        robot = new CurioRobot(hardwareMap);
+    }
+
+    @Override
+    public void runRobot() {
+        robot.drive()
+                .mecanum(
+                        gamepad1.left_stick_x,    // strafe:  -1 left,  +1 right
+                        gamepad1.left_stick_y,    // forward: -1 back,  +1 forward
+                        gamepad1.right_stick_x);  // rotate:  -1 left,  +1 right
+
+        // The drivetrain is driven every loop; the framework owns the motor writes.
+    }
+}

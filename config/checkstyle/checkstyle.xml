@@ -1,0 +1,171 @@
+<?xml version="1.0"?>
+<!DOCTYPE module PUBLIC
+    "-//Checkstyle//DTD Checkstyle Configuration 1.3//EN"
+    "https://checkstyle.org/dtds/configuration_1_3.dtd">
+
+<!--
+  CurioControl Checkstyle configuration.
+
+  Enforced by `./gradlew checkstyleMain` / `checkstyleTest`, and both run as part of
+  `./gradlew build`. Warnings are errors (maxWarnings = 0 in build.gradle.kts).
+
+  Keep this file aligned with docs/PROJECT_STRUCTURE.md §8 (Conventions).
+-->
+<module name="Checker">
+    <property name="charset" value="UTF-8"/>
+    <property name="severity" value="error"/>
+    <property name="fileExtensions" value="java"/>
+
+    <!-- Files -->
+    <module name="NewlineAtEndOfFile"/>
+    <module name="FileTabCharacter"/>
+
+    <module name="RegexpSingleline">
+        <property name="format" value="\s+$"/>
+        <property name="message" value="Line has trailing whitespace."/>
+    </module>
+
+    <module name="LineLength">
+        <property name="max" value="100"/>
+        <property name="ignorePattern" value="^\s*(package|import)\s|^\s*\*.*https?://|@see|@link"/>
+    </module>
+
+    <!--
+      Deliberate, documented exceptions. This is the only place a rule may be switched off, and
+      every entry carries a comment explaining why.
+    -->
+    <module name="SuppressionFilter">
+        <property name="file" value="${config_loc}/checkstyle/suppressions.xml"/>
+        <property name="optional" value="false"/>
+    </module>
+
+    <module name="TreeWalker">
+
+        <!-- Deliberate, documented exceptions live in suppressions.xml, not inline here. -->
+        <module name="SuppressionCommentFilter"/>
+
+        <!-- Imports -->
+        <module name="AvoidStarImport"/>
+        <module name="UnusedImports">
+            <property name="processJavadoc" value="true"/>
+        </module>
+        <module name="RedundantImport"/>
+        <module name="IllegalImport">
+            <!-- ADR-003 / ADR-012: never leak SDK internals or Android into the public API. -->
+            <property name="illegalPkgs" value="android, android.support, com.google.android"/>
+            <property name="illegalClasses" value="System.out, System.err"/>
+        </module>
+        <module name="CustomImportOrder">
+            <property name="sortImportsInGroupAlphabetically" value="true"/>
+            <property name="separateLineBetweenGroups" value="true"/>
+            <property name="customImportOrderRules" value="STATIC###THIRD_PARTY_PACKAGE"/>
+        </module>
+
+        <!-- Naming -->
+        <module name="PackageName">
+            <property name="format" value="^[a-z]+(\.[a-z][a-z0-9]*)*$"/>
+        </module>
+        <module name="TypeName"/>
+        <module name="MethodName">
+            <property name="format" value="^[a-z][a-zA-Z0-9_]*$"/>
+        </module>
+        <module name="LocalVariableName"/>
+        <module name="MemberName"/>
+        <module name="ParameterName"/>
+        <module name="ConstantName">
+            <property name="format" value="^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*$"/>
+        </module>
+        <!--
+          A non-final static field is mutable shared state, so it uses lowerCamelCase. A final
+          one is a true constant and uses UPPER_SNAKE. Both forms are accepted here; the choice
+          between them tells a reader which one it is.
+        -->
+        <module name="StaticVariableName">
+            <property name="format" value="^([A-Z][A-Z0-9]*(_[A-Z0-9]+)*|[a-z][a-zA-Z0-9]*)$"/>
+        </module>
+
+        <!-- Whitespace and blocks -->
+        <module name="WhitespaceAfter"/>
+        <module name="WhitespaceAround">
+            <property name="allowEmptyConstructors" value="true"/>
+            <property name="allowEmptyMethods" value="true"/>
+            <property name="allowEmptyTypes" value="true"/>
+            <property name="allowEmptyLambdas" value="true"/>
+        </module>
+        <module name="NoWhitespaceBefore"/>
+        <module name="ParenPad"/>
+        <module name="MethodParamPad"/>
+        <module name="GenericWhitespace"/>
+        <module name="EmptyStatement"/>
+        <module name="LeftCurly"/>
+        <module name="RightCurly"/>
+        <module name="NeedBraces"/>
+
+        <!-- Coding -->
+        <module name="EqualsHashCode"/>
+        <module name="SimplifyBooleanExpression"/>
+        <module name="SimplifyBooleanReturn"/>
+        <module name="StringLiteralEquality"/>
+        <module name="MissingSwitchDefault"/>
+        <module name="FallThrough"/>
+        <module name="UpperEll"/>
+        <module name="ArrayTypeStyle"/>
+        <module name="ModifierOrder"/>
+        <module name="OneStatementPerLine"/>
+        <module name="MultipleVariableDeclarations"/>
+        <module name="DefaultComesLast"/>
+        <module name="CovariantEquals"/>
+
+        <!-- Design: the framework stays lightweight (SPEC §43, §45) -->
+        <module name="FinalClass"/>
+        <module name="HideUtilityClassConstructor"/>
+        <module name="InterfaceIsType"/>
+        <!--
+          Public instance fields are banned outright. Public static fields are allowed because
+          CurioControl's configuration surface (CurioConfig) is public static flags by design.
+        -->
+        <module name="VisibilityModifier">
+            <property name="protectedAllowed" value="true"/>
+            <property name="allowPublicFinalFields" value="false"/>
+            <property name="allowPublicImmutableFields" value="true"/>
+            <property name="ignoreAnnotationCanonicalNames"
+                      value="java.lang.SuppressWarnings"/>
+        </module>
+        <module name="MagicNumber">
+            <property name="ignoreAnnotation" value="true"/>
+            <property name="ignoreHashCodeMethod" value="true"/>
+            <property name="ignoreFieldDeclaration" value="true"/>
+            <property name="tokens" value="NUM_DOUBLE, NUM_FLOAT, NUM_INT, NUM_LONG"/>
+        </module>
+
+        <!-- Javadoc: required on public API (SPEC §39, docs/DOCUMENTATION_PLAN.md §4) -->
+        <module name="JavadocType">
+            <property name="scope" value="public"/>
+            <property name="allowMissingParamTags" value="false"/>
+        </module>
+        <module name="JavadocStyle">
+            <property name="scope" value="public"/>
+            <property name="checkFirstSentence" value="true"/>
+            <property name="checkEmptyJavadoc" value="true"/>
+            <property name="checkHtml" value="true"/>
+        </module>
+        <module name="MissingJavadocMethod">
+            <property name="scope" value="public"/>
+            <property name="minLineCount" value="0"/>
+            <property name="allowedAnnotations"
+                      value="Override, Test, BeforeEach, AfterEach, BeforeAll, AfterAll, SuppressWarnings"/>
+            <property name="tokens"
+                      value="METHOD_DEF, CTOR_DEF, ANNOTATION_FIELD_DEF, COMPACT_CTOR_DEF"/>
+        </module>
+        <module name="MissingJavadocType">
+            <property name="scope" value="public"/>
+        </module>
+        <module name="NonEmptyAtclauseDescription"/>
+
+        <!-- TODO comments: never leave an unresolved one in a release -->
+        <module name="TodoComment">
+            <property name="format" value="(TODO|FIXME|XXX)(\(.*\))?:"/>
+            <property name="severity" value="warning"/>
+        </module>
+    </module>
+</module>
