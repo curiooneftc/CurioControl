@@ -7,8 +7,8 @@ pluginManagement {
 
 plugins {
     // Auto-provisions the Java 17 toolchain on machines that do not have it installed.
-    id("org.gradle.toolchains.foojay-resolver-convention") version "0.9.0"
-    id("com.gradle.develocity") version "4.2.1"
+    id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
+    id("com.gradle.develocity") version "4.6.0"
 }
 
 dependencyResolutionManagement {
