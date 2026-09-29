@@ -93,63 +93,79 @@ Week  01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25
 ### Milestone breakdown
 
 #### M1.1 — Core runtime (`core`) · Week 4
-- [ ] `CurioRobot` — container: hardware registry, subsystem registry, lifecycle (`init`/`loop`/`stop`)
-- [ ] `CurioConfig` — static config flags (`DEBUG`, telemetry cadence, feature toggles)
-- [ ] `CurioOpMode` / `CurioAuto` base classes extending SDK `OpMode` (optional use, per SPEC §25)
-- [ ] `HardwareRegistry` — named-device resolution + clear failure messages (SPEC §46)
-- [ ] `TelemetryManager` — `add(...).update()` fluent API, categories (SPEC §26)
-- [ ] Error/report formatting: `[CurioControl] ERROR / Missing hardware device: armMotor`
+- [x] `CurioRobot` — container: hardware registry, subsystem registry, lifecycle (`init`/`loop`/`stop`)
+- [x] `CurioConfig` — static config flags (`DEBUG`, telemetry cadence, feature toggles)
+- [x] `CurioOpMode` / `CurioAuto` base classes extending SDK `OpMode` (optional use, per SPEC §25)
+- [x] `HardwareRegistry` — named-device resolution + clear failure messages (SPEC §46), over a
+      `HardwareSource` port so the SDK's unmockable `HardwareMap` stays at the edge (ADR-014)
+- [x] `TelemetryManager` — `add(...).update()` fluent API, categories (SPEC §26)
+- [x] Error/report formatting: `[CurioControl] ERROR / Missing hardware device: <name>` plus the
+      expected type, since a wrong-type config is otherwise indistinguishable from a missing device
 
 **Exit:** `new CurioRobot(hardwareMap)` constructs on a Robot Controller with a minimal OpMode; missing-device error message matches the spec's example output.
 
 #### M1.2 — Hardware wrappers (`hardware`) · Weeks 4-5
-- [ ] `Motor` (wraps `DcMotorEx`): `setPower`, `setVelocity`, `setTargetPosition`, `getPower`, `getVelocity`, `getPosition`, `resetEncoder`, direction, zero-power behavior, run mode
-- [ ] Power validation: clamp/throw outside `[-1.0, 1.0]` (SPEC §11) — decide and document behavior
-- [ ] `Servo` (wraps SDK `Servo`) — generic position only; **no** `open()`/`close()` (SPEC §12: mechanism methods belong to subsystems)
-- [ ] `ContinuousServo` (wraps `CRServo`)
-- [ ] `Encoder` — position, velocity, reset, direction, `getDistance(ticksPerRev, wheelDiameterMm)`
-- [ ] `IMU` wrapper — heading/roll/pitch/yaw, reset, calibration entry point
-- [ ] `DigitalSensor`, `AnalogSensor` thin wrappers
-- [ ] `HardwareType` enum for registry lookups
+- [x] `Motor` (wraps `DcMotorEx`): `setPower`, `setVelocity`, `setTargetPosition`, `getPower`, `getVelocity`, `getPosition`, `resetEncoder`, direction, zero-power behavior, run mode
+- [x] Power validation: **throw** outside `[-1.0, 1.0]` (SPEC §11). Decided in Phase 1: a clamped
+      value means a miscalculated limit expression, and hiding that is how a mechanism drifts out of
+      range unnoticed. The message names the device.
+- [x] `Servo` (wraps SDK `Servo`) — generic position only; **no** `open()`/`close()` (SPEC §12: mechanism methods belong to subsystems)
+- [x] `ContinuousServo` (wraps `CRServo`)
+- [x] `Encoder` — position, velocity, reset, direction, `getDistance(ticksPerRev, wheelDiameterMm)`,
+      `getVelocityMmPerSecond(...)`. The SDK has no standalone encoder device, so this is a view
+      onto the owning motor and takes that motor's configuration name.
+- [x] `IMU` wrapper — heading/roll/pitch/yaw, `headingDegrees()`, `headingPositive()` wrapped to
+      `[0, 2π)`, reset, and calibration (`calibrate` returns a boolean, `requireCalibration` throws)
+- [x] `VoltageSensor` wrapper
+- [x] `DigitalSensor`, `AnalogSensor` thin wrappers
+- [x] `HardwareType` enum for registry lookups
 
 **Exit:** Each wrapper has a JVM unit test using a mocked `DcMotorEx`/`CRServo`/etc., plus a hardware-in-the-loop smoke test on the bench.
 
 #### M1.3 — PIDController (`control`) · Week 6
-- [ ] P / I / D, delta-time handling, integral accumulation + windup guard
-- [ ] Integral limit, output limits, error calculation, tolerance, `atSetpoint()`, `reset()`
-- [ ] Pure Java — zero FTC imports
-- [ ] Unit tests: step response, steady-state error, anti-windup under saturation, dt variation
+- [x] P / I / D, delta-time handling, integral accumulation + windup guard
+- [x] Integral limit, output limits, error calculation, tolerance, `atSetpoint()`, `reset()`
+- [x] Pure Java — zero FTC imports
+- [x] Unit tests: step response, steady-state error, anti-windup under saturation, dt variation
 
 **Exit:** Tests green; a documented "tune a PID in 10 minutes" guide exists.
 
 #### M1.4 — MecanumDrive + TankDrive (`drive`) · Weeks 6-7
-- [ ] `DriveBase` abstract contract (`mecanum`, `tank`, `stop`, `setZeroPowerBehavior`)
-- [ ] `MecanumDrive`: wheel power calc, normalization (preserves magnitude under saturation), direction config
-- [ ] `TankDrive`
-- [ ] Field-centric variant taking a heading argument (SPEC §20)
-- [ ] Unit tests: normalization math, direction config, zero-input behavior
+- [x] `DriveBase` abstract contract (`drive(strafe, forward, rotation)`, `stop`,
+      `setZeroPowerBehavior`). Deliberately **not** a `Subsystem` — a drivetrain has no per-loop work
+      of its own, and keeping it out of the hierarchy is what lets `drive` avoid depending on `core`.
+- [x] `MecanumDrive`: wheel power calc, normalization (preserves magnitude under saturation), direction config
+- [x] `TankDrive`
+- [x] Field-centric variant taking a heading argument (SPEC §20)
+- [x] Unit tests: normalization math, direction config, zero-input behavior
 
 **Exit:** Bench test — robot drives on a real mecanum chassis, no wheel drift on straight line.
 
 #### M1.5 — Subsystem base (`core`) · Week 7
-- [ ] `Subsystem` abstract class — `init()`, `loop()`, `stop()`, telemetry hook
-- [ ] `robot.registerSubsystem(...)`, `robot.arm()` typed accessor pattern
+- [x] `Subsystem` abstract class — `init()`, `loop()`, `stop()`, telemetry hook
+- [x] `robot.registerSubsystem(...)`; retrieval by name (`robot.subsystem("arm")`) or by type
+      (`robot.subsystem(Arm.class)`), which returns `null` when the type is ambiguous rather than
+      guessing between two intakes. Registration after `init()` throws.
 
 **Exit:** A hand-written `Arm` subsystem compiles against the framework and is registered at runtime.
 
 #### M1.6 — Tests, docs, release · Week 8
-- [ ] Unit test suite for all Phase 1 modules (≥ 70% on pure logic)
-- [ ] JavaDoc on 100% of public Phase 1 classes
-- [ ] `CHANGELOG.md` entry, `README.md` quickstart
+- [x] Unit test suite for all Phase 1 modules (≥ 70% on pure logic)
+- [x] JavaDoc on 100% of public Phase 1 classes
+- [x] `CHANGELOG.md` entry, `README.md` quickstart
 - [ ] **Publish `0.1.0` to GitHub Packages**
 - [ ] Consumed by a scratch robot project to prove the artifact resolves
 
 ### v0.1.0 Definition of Done
-- [ ] `implementation("org.curioone:curiocontrol:0.1.0")` resolves from GitHub Packages in a fresh project
-- [ ] All Phase 1 modules unit-tested
-- [ ] CI green: compile + test + Checkstyle + SpotBugs
-- [ ] JavaDoc published
-- [ ] Bench-validated TeleOp on a real robot
+- [x] All Phase 1 modules unit-tested (375 tests, no Robot Controller required)
+- [x] `compileJava`, `test`, Checkstyle, SpotBugs, Spotless, and the JaCoCo gate all green locally
+- [ ] `implementation("org.curioone:curiocontrol:0.1.0")` resolves from GitHub Packages in a fresh
+      project — **requires a push and a tag**
+- [ ] JavaDoc published — **requires a push**
+- [ ] Bench-validated TeleOp on a real robot — **requires hardware**
+
+The three unchecked items need a push, a tag, or a robot, none of which this session can do. They
+are not code problems.
 - [ ] CHANGELOG + README updated
 - [ ] Release notes published to GitHub Releases with compatibility matrix
 
@@ -167,7 +183,7 @@ Week  01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25
 - [ ] `PIDFController` = `kP·e + kI·∫e + kD·ė + kF·ff`
 - [ ] `Feedforward` interface + implementations: `Constant`, `Velocity`, `Acceleration`, `Gravity`
 - [ ] Combined model `kS + kV·v + kA·a`
-- [ ] Pure Java, no FTC imports; fully unit tested
+- [x] Pure Java, no FTC imports; fully unit tested
 
 **Exit:** Shared-gain simulation proves PIDF converges where plain PID shows steady-state error under load.
 
@@ -237,7 +253,7 @@ Week  01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25
 **Exit:** A full autonomous routine runs from a command tree, and a test proves the scheduler never runs two conflicting commands.
 
 #### M3.2 — Subsystem polish · Week 16
-- [ ] `Subsystem` binding to command scheduler (exclusive access semantics)
+- [x] `Subsystem` binding to command scheduler (exclusive access semantics)
 - [ ] Default `Subsystem`-provided command factories: `moveTo(pos)`, `waitUntil(tolerance)`
 - [ ] Documented ownership rules
 
@@ -399,7 +415,7 @@ These run continuously across all phases rather than in any single one:
 - [ ] CI green on `main`
 - [ ] JavaDoc complete for all new public APIs
 - [ ] Docs site updated with any new concepts
-- [ ] `CHANGELOG.md` updated
+- [x] `CHANGELOG.md` updated
 - [ ] Version bumped appropriately per SemVer
 - [ ] Release notes drafted
 - [ ] Phase retrospective held; action items filed

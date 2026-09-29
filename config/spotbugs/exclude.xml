@@ -10,7 +10,13 @@
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="https://github.com/spotbugs/filter/3.0.0 https://raw.githubusercontent.com/spotbugs/spotbugs/master/spotbugs/etc/findbugsfilter.xsd">
 
-    <!-- Tests: readability and defensive-coding findings are noise in test code. -->
+    <!-- Tests: readability and defensive-coding findings are noise in test code.
+
+         ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD is here because CurioConfig's flags are global by
+         design, and testing the telemetry cadence means setting them. JUnit gives each test its own
+         instance, so there is no shared-state hazard in the test suite itself; the production
+         Javadoc on CurioConfig states the single-threaded OpMode-thread contract.
+    -->
     <Match>
         <Source name="~.*[\\/]src[\\/]test[\\/].*"/>
         <Or>
@@ -24,6 +30,7 @@
             <Bug pattern="NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE"/>
             <Bug pattern="RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE"/>
             <Bug pattern="SIC_INNER_SHOULD_BE_STATIC"/>
+            <Bug pattern="ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD"/>
             <Bug pattern="UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR"/>
             <Bug pattern="URF_UNREAD_FIELD"/>
         </Or>
@@ -45,11 +52,61 @@
     </Match>
 
     <!--
+      EI / EI2 on the hardware and telemetry adapters.
+
+      Storing and returning the SDK object is the entire point of these classes. ADR-005 commits to
+      the wrapper approach *because* direct SDK access stays possible: getSdkObject() is the
+      documented escape hatch, so that any device the framework does not cover is still reachable
+      without forking a wrapper. SpotBugs' concern is that the caller can mutate the wrapper's
+      internals through the returned reference — which is the intended, documented behaviour, and
+      the same reference the SDK itself hands out.
+
+      This is not a real encapsulation violation. Defensively copying a DcMotorEx would be worse:
+      writes to the copy would not reach the hardware, which is precisely the bug this framework
+      exists to prevent.
+
+      `drive` is here for the same reason and a different reason: a drivetrain legitimately exposes
+      its motors (left(), right(), frontLeft(), ...) so a team can read a single wheel's position
+      or set one motor's direction without reaching for the SDK. That is a public API decision, not
+      an oversight.
+
+      `CurioRobot` is here for the most obvious reason of all: the specification's facade is
+      robot.drive() and robot.telemetry(). Returning the live drivetrain and telemetry manager is the
+      API. Returning a copy would be a facade that does not drive the robot.
+    -->
+    <Match>
+        <Or>
+            <Class name="~org\.curioone\.control\.hardware\..*"/>
+            <Class name="~org\.curioone\.control\.drive\..*"/>
+            <Class name="~org\.curioone\.control\.core\.(SdkTelemetrySink|TelemetryManager|SdkHardwareSource|HardwareRegistry|CurioRobot)"/>
+        </Or>
+        <Or>
+            <Bug pattern="EI_EXPOSE_REP"/>
+            <Bug pattern="EI_EXPOSE_REP2"/>
+        </Or>
+    </Match>
+
+    <!--
+      CurioConfig's public mutable statics are the framework's documented configuration surface
+      (CurioConfig.java, class Javadoc). Making them final would defeat their purpose: a team sets
+      CurioConfig.DEBUG = true at the top of an OpMode to turn on debug output.
+
+      MS_SHOULD_BE_FINAL is a false positive for a configuration holder by design. Making the
+      fields volatile would be worse than useless here: the values are written once during init and
+      read thousands of times per match, so there is no cross-thread publication to make safe, and
+      a volatile read on a hot path is a real (if small) cost.
+    -->
+    <Match>
+        <Class name="~org\.curioone\.control\.core\.CurioConfig"/>
+        <Bug pattern="MS_SHOULD_BE_FINAL"/>
+    </Match>
+
+    <!--
       A CLI entry point legitimately discards the result of System.exit when running under
       Gradle's Exec tasks. Nothing in this project ships a main() method yet; this rule is
       here so it does not have to be re-derived later.
     -->
     <Match>
-        <Class name="~dev\.curio\.control\.util\.Cli"/>
+        <Class name="~org\.curioone\.control\.util\.Cli"/>
     </Match>
 </FindBugsFilter>

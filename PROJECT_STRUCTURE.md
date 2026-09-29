@@ -112,23 +112,29 @@ If the pure-Java story ever becomes important (e.g. desktop simulation tools), t
 
 ```text
 org.curioone.control
-├── core/            # CurioRobot, CurioConfig, CurioOpMode, CurioAuto, Subsystem, HardwareRegistry
-├── hardware/        # Motor, Servo, ContinuousServo, Encoder, IMU, DigitalSensor, AnalogSensor
-├── control/         # PIDController, PIDFController, Feedforward, MotionProfile
+├── core/            # CurioRobot, CurioConfig, CurioOpMode, CurioAuto, Subsystem, HardwareRegistry,
+│                    #   HardwareSource, SdkHardwareSource, TelemetryManager, TelemetrySink, categories
+├── hardware/        # Motor, Servo, ContinuousServo, Encoder, IMU, DigitalSensor, AnalogSensor,
+│                    #   VoltageSensor, HardwareType
+├── control/         # PIDController (v0.1.0), PIDFController, Feedforward, MotionProfile (v0.2.0)
 ├── drive/           # DriveBase, MecanumDrive, TankDrive
 ├── command/         # Command, CommandScheduler, Sequential/Parallel/Instant/WaitCommand
-├── telemetry/       # TelemetryManager, Logger (CSV), categories
+├── telemetry/       # Logger (CSV) — v0.2.0
 ├── vision/          # VisionManager, AprilTagManager
 ├── math/            # Pose2d, Vector2d, Rotation2d, Transform2d, Interpolation, Clamp, Units, Geometry
-└── util/            # Range, Timer, RateLimiter, Debouncer, EdgeDetector, Clock
+└── util/            # Range, Clock (v0.1.0), Timer, RateLimiter, Debouncer, EdgeDetector (v0.2.0)
 ```
+
+`TelemetryManager` and `TelemetryCategory` live in `core`, not `telemetry`. Putting them in
+`telemetry` would make `core` depend on `telemetry` and `telemetry` depend on `core` — a cycle. The
+`telemetry` package is reserved for the CSV `Logger` (v0.2.0), which nothing in `core` needs.
 
 Each package gets a `package-info.java` with a short description (also feeds the Javadoc overview).
 
 ### 3.1 Layering rules (enforced by ArchUnit)
 
 ```text
-core     → (nothing internal)
+core     → (nothing internal) EXCEPT CurioRobot, the composition root
 math     → (nothing internal)
 util     → (nothing internal)
 control  → math, util
@@ -145,23 +151,38 @@ Additional hard rules:
 - Nothing imports `vision` except `vision` itself (and `core`'s lazy accessor, if used).
 - No cycles between any packages.
 
+### 3.2 The `CurioRobot` exception
+
+`core.CurioRobot` is the **composition root**: the one class that wires the pieces together, and
+therefore the one class in `core` allowed to reach outward to `hardware`, `drive`, and `util`. The
+specification's facade (`robot.drive()`, `robot.imu()`, `robot.telemetry()`) cannot exist without
+it.
+
+`LayeringTest` names `CurioRobot` as the sole permitted exception, so a second exception added later
+fails the build rather than quietly eroding the rule. See ADR-014.
+
+The corollary is that `drive` may **not** depend on `core`. Name-to-device resolution is the
+composition root's job, so `CurioRobot.drive()` builds `Motor` wrappers and hands them to the
+drivetrain constructor. A drivetrain is constructed from already-wrapped motors and knows nothing
+about the registry.
+
 ---
 
 ## 4. Module → Phase Mapping
 
 | Package | Introduced in | Key types |
 |---------|---------------|-----------|
-| `core` | v0.1.0 | `CurioRobot`, `CurioConfig`, `CurioOpMode`, `Subsystem`, `HardwareRegistry` |
-| `hardware` | v0.1.0 | `Motor`, `Servo`, `ContinuousServo`, `Encoder`, `IMU` |
-| `util` | v0.1.0 | `Range`, `Timer`, `Debouncer`, `Clock` (added as needed) |
-| `math` | v0.2.0 | `Vector2d`, `Rotation2d`, `Pose2d`, `Transform2d`, `Clamp`, `Units` |
-| `control` | v0.1.0 (PID), v0.2.0 (rest) | `PIDController`, `PIDFController`, `Feedforward`, `MotionProfile` |
-| `telemetry` | v0.1.0 (telemetry), v0.2.0 (logging) | `TelemetryManager`, `Logger` |
+| `core` | v0.1.0 | `CurioRobot`, `CurioConfig`, `CurioOpMode`, `CurioAuto`, `Subsystem`, `HardwareRegistry`, `HardwareSource`, `TelemetryManager` |
+| `hardware` | v0.1.0 | `Motor`, `Servo`, `ContinuousServo`, `Encoder`, `IMU`, `DigitalSensor`, `AnalogSensor`, `VoltageSensor`, `HardwareType` |
+| `util` | v0.1.0 | `Range`, `Clock`, `SystemClock` |
+| `control` | v0.1.0 (PID), v0.2.0 (rest) | `PIDController`; v0.2.0 adds `PIDFController`, `Feedforward`, `MotionProfile` |
 | `drive` | v0.1.0 | `MecanumDrive`, `TankDrive`, `DriveBase` |
+| `telemetry` | v0.2.0 | `Logger` |
+| `math` | v0.2.0 | `Vector2d`, `Rotation2d`, `Pose2d`, `Transform2d`, `Clamp`, `Units` |
 | `command` | v0.3.0 | `Command`, `CommandScheduler`, `SequentialCommand`, …, `StateMachine` |
 | `vision` | v0.4.0 | `VisionManager`, `AprilTagManager` |
 
-> `math` is listed as v0.2.0 because `v0.1.0` only needs simple `Vector2d`-free math; the full geometry stack lands with the control work. Small pieces of `util` (like `Range`, `Timer`) appear in v0.1.0 as hardware/telemetry need them.
+> `math` is listed as v0.2.0 because `v0.1.0` only needs simple `Vector2d`-free math; the full geometry stack lands with the control work. `TelemetryManager` is in `core` in v0.1.0, not `telemetry` — see §3.1.
 
 ---
 

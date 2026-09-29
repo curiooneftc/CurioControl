@@ -4,6 +4,11 @@ java = "17"
 # --- FTC SDK (compileOnly: provided by the Robot Controller app at runtime) ---
 ftcSdk = "12.0.0"
 androidxAnnotation = "1.9.1"
+# The SDK's SerialNumber class carries a Gson annotation. Without gson on the compile classpath
+# javac emits a classfile-lint warning that -Werror turns into a build failure. Declaring the
+# real dependency is better than suppressing the lint category, which would hide genuine classpath
+# gaps. compileOnly: the Robot Controller provides it at runtime.
+gson = "2.14.0"
 # --- Libraries ---
 junit = "5.11.4"
 mockito = "5.24.0"
@@ -22,6 +27,7 @@ ftc-vision = { module = "org.firstinspires.ftc:Vision", version.ref = "ftcSdk" }
 ftc-inspection = { module = "org.firstinspires.ftc:Inspection", version.ref = "ftcSdk" }
 ftc-ftccommon = { module = "org.firstinspires.ftc:FtcCommon", version.ref = "ftcSdk" }
 androidx-annotation = { module = "androidx.annotation:annotation", version.ref = "androidxAnnotation" }
+gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
 
 # Test
 junit-bom = { module = "org.junit:junit-bom", version.ref = "junit" }
