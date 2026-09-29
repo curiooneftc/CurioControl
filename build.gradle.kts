@@ -16,7 +16,7 @@ plugins {
 }
 
 group = "org.curioone"
-version = "0.1.2"
+version = "0.1.4"
 
 description = "CurioControl — a modular control and development framework for FIRST Tech Challenge robots."
 
