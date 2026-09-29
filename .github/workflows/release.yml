@@ -62,7 +62,6 @@ jobs:
         with:
           files: |
             build/libs/*.jar
-            build/libs/*.module
             build/libs/*.pom
           fail_on_unmatched_files: true
           generate_release_notes: true
