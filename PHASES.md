@@ -157,17 +157,16 @@ Week  01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25
 - [ ] Consumed by a scratch robot project to prove the artifact resolves
 
 ### v0.1.0 Definition of Done
-- [x] All Phase 1 modules unit-tested (375 tests, no Robot Controller required)
+- [x] All Phase 1 modules unit-tested (377 tests, no Robot Controller required)
 - [x] `compileJava`, `test`, Checkstyle, SpotBugs, Spotless, and the JaCoCo gate all green locally
 - [ ] `implementation("org.curioone:curiocontrol:0.1.0")` resolves from GitHub Packages in a fresh
       project — **requires a push and a tag**
 - [ ] JavaDoc published — **requires a push**
 - [ ] Bench-validated TeleOp on a real robot — **requires hardware**
 
-The three unchecked items need a push, a tag, or a robot, none of which this session can do. They
-are not code problems.
-- [ ] CHANGELOG + README updated
-- [ ] Release notes published to GitHub Releases with compatibility matrix
+The remaining unchecked items need a push, a tag, or a robot. They are not code problems.
+- [x] CHANGELOG + README updated
+- [ ] Release notes published to GitHub Releases with compatibility matrix — **requires a push and a tag**
 
 ---
 

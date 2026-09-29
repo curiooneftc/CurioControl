@@ -60,10 +60,10 @@ First usable release: a mecanum robot that drives, and the layer everything else
   ArchUnit, which caught a real attempt to add registry constructors to the drivetrains.
 
 ### Testing
-- 375 unit tests, no Robot Controller required.
+- 377 unit tests, no Robot Controller required.
 - Architecture guard tests: the pure-Java boundary of `math`/`control`/`util`, the package
   layering, and the `CurioRobot` composition-root exception (ADR-010, ADR-014).
-- JaCoCo coverage gate enabled at 70% on pure logic only. `util` is at 100%, `control` at 94%.
+- JaCoCo coverage gate enabled at 70% on pure logic only. `util` is at 100%, `control` at 98%.
   `hardware`, `drive`, and `core` are excluded deliberately: they are thin delegations, where high
   line coverage would say the delegation happened rather than that the robot works.
 
