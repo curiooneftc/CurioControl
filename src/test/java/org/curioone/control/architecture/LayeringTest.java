@@ -6,6 +6,8 @@ import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
 import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.lang.ArchRule;
+import java.util.ArrayList;
+import java.util.List;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -76,9 +78,14 @@ class LayeringTest {
     /**
      * Builds a "no class in {@code source} may depend on {@code forbidden}" rule.
      *
-     * <p>Empty results are allowed. Several packages are still empty in Phase 0, and a rule that
-     * has nothing to check yet is not a failure — a rule that stops checking once the package is
-     * populated is, and {@code allowEmptyShould} keeps that distinction honest.
+     * <p>The source package is removed from the forbidden set. A package legitimately depends on
+     * its own classes — {@code Motor.encoder()} returns {@code Encoder}, both in {@code hardware} —
+     * and leaving the source in the forbidden list turns every internal reference into a false
+     * violation.
+     *
+     * <p>Empty results are allowed. A package with nothing in it yet is not a failure; a rule that
+     * stops checking once its package is populated is, and {@code allowEmptyShould} keeps that
+     * distinction honest.
      */
     private static ArchRule noDependencyOn(String source, String[] forbidden, String reason) {
         return noClasses()
@@ -86,22 +93,63 @@ class LayeringTest {
                 .resideInAPackage(source)
                 .should()
                 .dependOnClassesThat()
-                .resideInAnyPackage(forbidden)
+                .resideInAnyPackage(withoutSelf(source, forbidden))
                 .because(reason)
                 .allowEmptyShould(true);
     }
 
+    /** Removes {@code source} from a forbidden-package list. */
+    private static String[] withoutSelf(String source, String[] forbidden) {
+        final List<String> filtered = new ArrayList<>(forbidden.length);
+        for (String candidate : forbidden) {
+            if (!candidate.equals(source)) {
+                filtered.add(candidate);
+            }
+        }
+        return filtered.toArray(new String[0]);
+    }
+
+    /**
+     * The one documented exception to the layering: {@code CurioRobot} is the composition root.
+     *
+     * <p>It is what wires the framework together, so it is the only class permitted to reach
+     * outward from {@code core} into {@code hardware}, {@code drive}, and {@code telemetry}.
+     * Without it the specification's facade — {@code robot.drive()}, {@code robot.imu()}, {@code
+     * robot.telemetry()} — could not exist (ADR-014).
+     *
+     * <p>Every other class in {@code core} must remain a leaf. The rule is written to exclude
+     * exactly this one class by name, so a <em>new</em> outward dependency added to any other
+     * {@code core} class still fails.
+     */
     @Test
-    @DisplayName("core, math and util depend on no other framework package")
-    void foundationPackagesAreIndependent() {
-        final String reason = "core, math and util are the foundation layer (" + LAYERING + ")";
+    @DisplayName("CurioRobot is the sole exception: every other core class is a leaf")
+    void onlyCurioRobotMayDependOutwardFromCore() {
+        noClasses()
+                .that()
+                .resideInAPackage("org.curioone.control.core..")
+                .and()
+                .doNotHaveSimpleName("CurioRobot")
+                .should()
+                .dependOnClassesThat()
+                .resideInAnyPackage(
+                        "org.curioone.control.hardware..",
+                        "org.curioone.control.drive..",
+                        "org.curioone.control.telemetry..",
+                        "org.curioone.control.vision..")
+                .because(
+                        "core is a leaf except for CurioRobot, the composition root (ADR-014). "
+                                + "Any other core class reaching outward is a layering violation")
+                .allowEmptyShould(true)
+                .check(classes);
+    }
+
+    @Test
+    @DisplayName("foundation packages are leaves")
+    void foundationPackagesAreLeaves() {
+        final String reason = "core, math and util are the foundation layer (ADR-003)";
 
         for (String source :
-                new String[] {
-                    "org.curioone.control.core..",
-                    "org.curioone.control.math..",
-                    "org.curioone.control.util.."
-                }) {
+                new String[] {"org.curioone.control.math..", "org.curioone.control.util.."}) {
             noDependencyOn(source, ALL_PACKAGES, reason).check(classes);
         }
     }

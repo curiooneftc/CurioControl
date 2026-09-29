@@ -23,6 +23,7 @@ The full set, with status, is in
 | [011](011-vision-is-optional.md) | Vision is lazy and optional | Accepted |
 | [012](012-no-competition-constants.md) | The framework never contains competition constants | Accepted |
 | [013](013-package-namespace.md) | Maven group and Java package follow the GitHub org | Accepted |
+| [014](014-composition-root-and-hardware-source.md) | `CurioRobot` as composition root, hardware behind a port | Accepted |
 
 ## Writing a new ADR
 

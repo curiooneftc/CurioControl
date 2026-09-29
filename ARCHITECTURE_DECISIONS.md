@@ -28,6 +28,7 @@
 | [011](docs/adr/011-vision-is-optional.md) | Vision is lazy and optional | Accepted |
 | [012](docs/adr/012-no-competition-constants.md) | Framework never contains competition constants | Accepted |
 | [013](docs/adr/013-package-namespace.md) | Maven group and Java package follow the GitHub org | Accepted |
+| [014](docs/adr/014-composition-root-and-hardware-source.md) | `CurioRobot` as composition root, hardware behind a port | Accepted |
 
 ---
 
@@ -350,6 +351,35 @@ positions, no specific motor names). Those live in the robot project's `RobotCon
 - CurioControl stays reusable across robots and seasons.
 - APIs accept these values as parameters (e.g. `encoder.getDistance(ticksPerRev, wheelDiameterMm)`).
 - Test fixtures hold physical constants, never `src/main`.
+
+---
+
+## ADR-014: `CurioRobot` as composition root, hardware behind a port
+
+**Status:** Accepted
+
+Full text: [`docs/adr/014-composition-root-and-hardware-source.md`](docs/adr/014-composition-root-and-hardware-source.md)
+
+**Context**
+Two problems collided in Phase 1. The specification's facade (`robot.drive()`, `robot.imu()`)
+requires a class that reaches across packages, which conflicts with `core` being a leaf. Separately,
+`HardwareMap` reaches into `android.content.Context` and **cannot be mocked on a desktop JVM** — so
+any signature mentioning it is untestable off-robot, which is every hardware wrapper and the
+composition root itself.
+
+**Decision**
+`core.CurioRobot` is the composition root and the only class in `core` permitted to depend outward;
+`LayeringTest` names it as the sole exception. Hardware reaches the framework through a one-method
+`HardwareSource` port, with `SdkHardwareSource` adapting the real `HardwareMap` at the edge.
+
+**Consequences**
+- The specification's facade exists, and the leaf rule survives as a rule with one named exception
+  rather than as an aspiration.
+- `CurioRobot` and `HardwareSource` are public API — they are the framework's two extension seams.
+- `drive` may not depend on `core`, so name-to-device resolution happens in the composition root and
+  drivetrains are constructed from already-wrapped `Motor`s. The architecture test enforced this.
+- `FakeHardwareSource` is a plain `HashMap`, so the lifecycle, subsystem registry, hardware
+  resolution, and drivetrain construction are all covered without a hub.
 
 ---
 

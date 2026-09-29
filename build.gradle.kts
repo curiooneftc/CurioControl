@@ -16,7 +16,7 @@ plugins {
 }
 
 group = "org.curioone"
-version = "0.1.0-SNAPSHOT"
+version = "0.1.0"
 
 description = "CurioControl — a modular control and development framework for FIRST Tech Challenge robots."
 
@@ -67,22 +67,49 @@ dependencies {
     // through the ordinary compile classpath rather than the AAR-unpacking configuration.
     compileOnly(libs.androidx.annotation)
     testCompileOnly(libs.androidx.annotation)
+
+    // gson appears in an annotation on one SDK class. It is compileOnly like the rest of the SDK:
+    // the Robot Controller supplies it at runtime.
+    compileOnly(libs.gson)
+    testCompileOnly(libs.gson)
 }
+
+// The unpacked FTC SDK classes, used as a compile classpath entry.
+//
+// Two traps avoided here, both of which fail silently until a class actually imports an SDK type:
+//
+//  1. `extractFtcSdkClasses.map { it.outputDirectory }` yields a provider *of a property
+//     object*, not of a directory, and resolves to an empty classpath entry.
+//  2. Putting the output *directory* on the classpath does not work either: javac treats a
+//     directory as a package root and never looks inside it for jars. The entry has to be the
+//     jar files themselves.
+//
+// `builtBy` carries the task dependency, and matching the jars keeps the whole thing lazy.
+val ftcSdkClassesDir = layout.buildDirectory.dir("ftc-sdk-classes")
 
 val extractFtcSdkClasses by tasks.registering(UnpackAarClasses::class) {
     description = "Unpacks classes.jar out of the FTC SDK AARs so the library can compile against them."
     group = "build setup"
     strict.set(true)
     archives.from(ftcSdkAars)
-    outputDirectory.set(layout.buildDirectory.dir("ftc-sdk-classes"))
+    outputDirectory.set(ftcSdkClassesDir)
 }
 
-/** The unpacked FTC SDK classes, used as a compile classpath entry. */
-val ftcSdkClasses: FileCollection = files(extractFtcSdkClasses.map { it.outputDirectory })
+val ftcSdkClasses: FileCollection =
+    objects
+        .fileCollection()
+        .from(files(ftcSdkClassesDir).asFileTree.matching { include("**/*.jar") })
+        .builtBy(extractFtcSdkClasses)
 
 dependencies {
     compileOnly(ftcSdkClasses)
+
+    // The tests need the SDK at *runtime*, not just at compile time: a wrapper class that
+    // implements DcMotorEx cannot even be loaded without it, let alone exercised. testRuntimeOnly
+    // rather than testImplementation because neither is published, and the compile/runtime split
+    // keeps the intent explicit: the SDK is on the test classpath, never in the artifact.
     testCompileOnly(ftcSdkClasses)
+    testRuntimeOnly(ftcSdkClasses)
 
     testImplementation(platform(libs.junit.bom))
     testImplementation(libs.junit.jupiter)
@@ -171,10 +198,27 @@ tasks.withType<JacocoReport>().configureEach {
     }
 }
 
-// The gate is relaxed in Phase 0 — there is no production code to cover yet. See
-// docs/TESTING_STRATEGY.md §4 for the per-phase targets that apply from v0.1.0 onward.
+// SpotBugs is configured with ignoreFailures so its report is always written, which means the
+// task's own exit code cannot gate the build. This doLast is the gate: a report containing any
+// finding fails the task, so a violation is never silently tolerated and the report is on disk to
+// explain it.
+// The gate covers pure logic only (math, control, util) — the packages ADR-003 makes SDK-free, and
+// the only ones where coverage percentage is a meaningful measure of quality. `hardware`, `drive`,
+// and `core` are thin delegations to the SDK: high line coverage there says the delegation happens,
+// not that the robot works, and the bench tests are what actually validate them (TESTING_STRATEGY
+// §3.4). Excluding them keeps the number honest rather than gamed by counting one-line delegates.
 tasks.named<JacocoCoverageVerification>("jacocoTestCoverageVerification") {
-    enabled = false
+    violationRules {
+        rule {
+            element = "CLASS"
+            includes = listOf("org.curioone.control.math.*", "org.curioone.control.control.*", "org.curioone.control.util.*")
+            limit {
+                counter = "LINE"
+                value = "COVEREDRATIO"
+                minimum = "0.70".toBigDecimal()
+            }
+        }
+    }
 }
 
 // --- Static analysis -----------------------------------------------------------

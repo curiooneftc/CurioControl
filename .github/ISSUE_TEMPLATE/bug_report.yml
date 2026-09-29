@@ -34,7 +34,7 @@ body:
         3.
       placeholder: |
         1. Add the dependency to a fresh FTC project.
-        2. Run a TeleOp that calls robot.drive().mecanum(...).
+        2. Run a TeleOp that calls robot.drive().drive(...).
         3. Push the left stick fully forward.
     validations:
       required: true

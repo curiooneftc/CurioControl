@@ -1,8 +1,5 @@
 # Hardware Abstraction
 
-> Status: this page describes the target v1.0.0 API. The `hardware` package lands in v0.1.0; see
-> [the phases document](../../PHASES.md).
-
 CurioControl wraps common FTC hardware in thin classes that validate arguments, document units,
 and delegate to the SDK. They **wrap** the SDK; they never hide it.
 
@@ -68,7 +65,9 @@ There is also `ContinuousServo` for `CRServo` devices that take a power instead 
 ## Encoder
 
 ```java
-Encoder encoder = robot.encoder("leftEncoder");
+// There is no standalone encoder device in the SDK: an encoder is reached through
+// the motor it is built into, so this takes the *motor's* configuration name.
+Encoder encoder = robot.encoder("leftDrive");
 
 int ticks = encoder.getPosition();
 double ticksPerSecond = encoder.getVelocity();
@@ -81,6 +80,10 @@ Raw ticks are rarely what you want, so conversion takes the physical constants a
 double distanceMm = encoder.getDistance(
         RobotConfig.Drive.TICKS_PER_REV,
         RobotConfig.Drive.WHEEL_DIAMETER_MM);
+
+double speedMmPerSecond = encoder.getVelocityMmPerSecond(
+        RobotConfig.Drive.TICKS_PER_REV,
+        RobotConfig.Drive.WHEEL_DIAMETER_MM);
 ```
 
 The parameters are arguments, not framework constants. The framework does not know your wheel
@@ -89,11 +92,25 @@ diameter, and never will — that value is what makes a robot a specific robot.
 ## IMU
 
 ```java
-IMU imu = robot.imu();
+IMU imu = robot.imu();   // resolved under the name "imu"
 
-double heading = imu.heading();   // radians, field-relative after reset
-imu.resetHeading();
+double heading = imu.heading();          // radians, field-relative after reset
+double degrees = imu.headingDegrees();
+double wrapped = imu.headingPositive();  // [0, 2π), for comparisons and indexing
+
+imu.resetHeading();                      // makes the current yaw zero
 ```
+
+Calibrate before reading angles. `requireCalibration(...)` throws with an explanation if it fails,
+whereas `calibrate(...)` returns a boolean if you would rather handle it yourself:
+
+```java
+imu.requireCalibration(new IMU.Parameters(RobotConfig.IMU.ORIENTATION));
+```
+
+The mounting parameters are yours because the framework cannot know how the IMU is mounted on your
+robot. A calibration that silently fails gives you a heading with a constant offset — field-centric
+drive built on that drifts, and it is very hard to notice.
 
 Remember to reset the heading between autonomous runs. A stale IMU offset is one of the most
 common causes of an autonomous that works in practice and fails in a match.
@@ -104,12 +121,29 @@ A missing device is reported by name, with the configuration name that was expec
 
 ```text
 [CurioControl] ERROR
-Missing hardware device: armMotor
-Expected configuration name: "arm"
+Missing hardware device: arm
+Expected configuration name: "arm" of type DcMotorEx
 ```
+
+The expected **type** is in the message because a device configured under the right name but the
+wrong type is indistinguishable from a missing one at the call site, and "check the type" is the
+fix that a name alone will not suggest.
 
 The framework never silently substitutes another device. A robot that drives with one motor
 inverted is far harder to diagnose than one that refuses to start.
+
+## Checking for optional hardware
+
+Some devices are on some robots and not others. `has(...)` probes without throwing:
+
+```java
+if (robot.has(HardwareType.VOLTAGE_SENSOR, "battery")) {
+    battery = robot.voltageSensor("battery");
+}
+```
+
+Do not use this to guard a *required* device. That turns a loud failure into a silent one, and the
+next symptom appears somewhere unrelated, on the field.
 
 ## Next
 

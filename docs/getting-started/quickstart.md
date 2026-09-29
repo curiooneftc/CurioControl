@@ -1,9 +1,7 @@
 # Quickstart
 
-> Status: this page describes the target v1.0.0 API. The v0.1.0 release implements a subset of it;
-> see [the phases document](../PHASES.md) for exactly what exists in which release.
-
-The goal: a mecanum robot that drives, in about ten minutes.
+The goal: a mecanum robot that drives, in about ten minutes. Everything on this page exists in
+`0.1.0`.
 
 ## Before you start
 
@@ -18,7 +16,6 @@ package org.curioone.robot.opmode;
 
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import org.curioone.control.core.CurioOpMode;
-import org.curioone.control.core.CurioRobot;
 
 @TeleOp(name = "Main TeleOp")
 public class MainTeleOp extends CurioOpMode {
@@ -31,7 +28,7 @@ public class MainTeleOp extends CurioOpMode {
     @Override
     public void runRobot() {
         robot.drive()
-                .mecanum(
+                .drive(
                         gamepad1.left_stick_x,   // strafe
                         gamepad1.left_stick_y,   // forward
                         gamepad1.right_stick_x); // rotation
@@ -41,6 +38,10 @@ public class MainTeleOp extends CurioOpMode {
 
 That is the whole TeleOp. The framework knows how to turn three gamepad axes into four motor
 powers; the OpMode only says what the driver is asking for.
+
+`CurioOpMode` is a convenience, not a requirement — a plain SDK `OpMode` holding a `CurioRobot` field
+works identically, calling `robot.init()`, `robot.loop()`, and `robot.stop()` itself. If you already
+have an OpMode structure you like, keep it.
 
 ## 2. Deploy and run
 
@@ -59,9 +60,10 @@ sequence of motor calls.
 ```java
 package org.curioone.robot.subsystem;
 
+import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
-import org.curioone.control.hardware.Motor;
 import org.curioone.control.core.Subsystem;
+import org.curioone.control.hardware.Motor;
 
 public class Arm extends Subsystem {
 
@@ -71,24 +73,53 @@ public class Arm extends Subsystem {
         this.motor = new Motor(hardwareMap, "arm");
     }
 
+    @Override
+    public void init() {
+        // Configure the mechanism here, not in the constructor: a constructor runs before the
+        // Robot Controller's hardware map is fully populated.
+        motor.setRunMode(DcMotor.RunMode.RUN_TO_POSITION);
+    }
+
     public void moveTo(int ticks) {
         motor.setTargetPosition(ticks);
+    }
+
+    @Override
+    public void stop() {
+        // The framework calls this when the OpMode ends, including on an early exit.
+        motor.setPower(0.0);
     }
 }
 ```
 
-Register it once, then use it everywhere:
+Register it once in `initRobot()`, then use it everywhere:
 
 ```java
-robot.registerSubsystem(new Arm(hardwareMap));
+private Arm arm;
 
-// in runRobot()
-if (gamepad1.a) {
-    robot.arm().moveTo(RobotConfig.Arm.HIGH);
+@Override
+public void initRobot() {
+    robot = new CurioRobot(hardwareMap);
+    arm = new Arm(hardwareMap);
+    robot.registerSubsystem(arm);
+}
+
+@Override
+public void runRobot() {
+    if (gamepad1.a) {
+        arm.moveTo(RobotConfig.Arm.HIGH);
+    }
 }
 ```
 
-Notice there is no motor lookup in the OpMode and no tick math. The subsystem owns both.
+There is no motor lookup in the OpMode and no tick math. The subsystem owns both.
+
+Registering a subsystem tells the framework to call its `init()`, `loop()`, and `stop()` each
+iteration — and `stop()` is the one that matters, because an arm left under power is an arm that
+keeps moving after the OpMode ends. The framework calls it for you.
+
+Subsystems must be registered **before** `init()` returns. Registering one later throws, because it
+would never receive its `init()` and would run against hardware it never configured.
 
 ## 4. Keep configuration out of the code
 

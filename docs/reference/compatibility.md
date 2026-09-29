@@ -14,11 +14,24 @@ Log.d("CurioControl", "Running " + CurioConfig.version());
 
 | Component | Version |
 |---|---|
-| CurioControl | 0.1.0-SNAPSHOT |
+| CurioControl | 0.1.0 |
 | FTC SDK | 12.0.0 |
 | Android SDK | 34 |
 | Java | 17 |
 | Gradle | 8.14.5 |
+
+## What is in 0.1.0
+
+| Package | Contents |
+|---|---|
+| `util` | `Clock`, `SystemClock`, `Range` |
+| `core` | `CurioRobot`, `Subsystem`, `HardwareRegistry`, `HardwareSource`, `TelemetryManager`, `CurioConfig`, `CurioOpMode`, `CurioAuto` |
+| `hardware` | `Motor`, `Encoder`, `Servo`, `ContinuousServo`, `IMU`, `DigitalSensor`, `AnalogSensor`, `VoltageSensor`, `HardwareType` |
+| `control` | `PIDController` |
+| `drive` | `DriveBase`, `MecanumDrive`, `TankDrive` |
+
+`math`, `command`, `telemetry` (CSV `Logger`), and `vision` are **not** in 0.1.0. See
+[the phases document](../../PHASES.md) for what arrives when.
 
 ## Support matrix
 

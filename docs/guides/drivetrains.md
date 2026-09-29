@@ -1,21 +1,31 @@
 # Drivetrains
 
-> Status: this page describes the target v1.0.0 API. The `drive` package lands in v0.1.0; see
-> [the phases document](../../PHASES.md).
-
 CurioControl provides a generic drivetrain contract and two implementations. The abstraction covers
 kinematics and power distribution; it does not decide what kind of robot you have.
 
 ## Mecanum
 
+`robot.drive()` returns a mecanum base built from the conventional motor names `frontLeft`,
+`frontRight`, `backLeft`, and `backRight`. Call `drive(...)` each loop:
+
 ```java
-robot.drive().mecanum(
+robot.drive().drive(
         gamepad1.left_stick_x,   // strafe  (-1 left,  1 right)
         gamepad1.left_stick_y,   // forward (-1 back,  1 forward)
         gamepad1.right_stick_x); // rotate (-1 left,  1 right)
 ```
 
 That is the common case: translation in two axes plus rotation, from three sticks.
+
+If your motors are named differently, build the base explicitly and keep the reference:
+
+```java
+MecanumDrive drive = robot.mecanumDrive("fl", "fr", "bl", "br");
+drive.drive(x, y, r);
+```
+
+`drive(...)` and `mecanum(...)` are the same method under two names; the type-specific name is
+what you reach for when you hold a `MecanumDrive` directly.
 
 ### Normalization
 
@@ -35,21 +45,33 @@ Mecanum wheels are directional. A mirrored motor makes the robot spin instead of
 symptom looks like a broken controller rather than a configuration mistake.
 
 ```java
-MecanumDrive drive = robot.drive().mecanum();
-drive.setLeftFrontInverted(true);
+MecanumDrive drive = robot.mecanumDrive("fl", "fr", "bl", "br");
+drive.setFrontLeftInverted(true);
 ```
 
 Direction lives in your robot's configuration, not in the framework.
 
 ## Tank
 
+Install a `TankDrive` before the first call to `robot.drive()`:
+
 ```java
-robot.drive().tank(
-        gamepad1.left_stick_y,
-        gamepad1.right_stick_y);
+robot.setDrive(robot.tankDrive("left", "right"));
+robot.drive().drive(0.0, gamepad1.left_stick_y, gamepad1.right_stick_y);
+```
+
+Or drive it directly, which is clearer when you have the reference:
+
+```java
+TankDrive drive = robot.tankDrive("left", "right");
+drive.tank(gamepad1.left_stick_y, gamepad1.right_stick_y);
 ```
 
 Straightforward: left power and right power. Differential steering handles the turning.
+
+A tank chassis cannot strafe. `drive(strafe, forward, rotation)` **discards** the strafe axis rather
+than pretending to strafe — you get a turn where you asked for a slide, which is a visible bug
+rather than a silent one.
 
 ## Field-centric
 
@@ -57,7 +79,9 @@ Robot-centric means "forward is where the robot is pointing". Field-centric mean
 the field is". The second is what most drivers expect.
 
 ```java
-robot.drive().fieldCentric(
+MecanumDrive drive = robot.mecanumDrive("fl", "fr", "bl", "br");
+
+drive.fieldCentric(
         gamepad1.left_stick_x,
         gamepad1.left_stick_y,
         gamepad1.right_stick_x,
