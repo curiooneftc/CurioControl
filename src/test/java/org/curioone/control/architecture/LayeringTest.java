@@ -232,14 +232,18 @@ class LayeringTest {
     }
 
     @Test
-    @DisplayName("nothing outside vision imports vision")
+    @DisplayName("nothing outside vision imports vision, except the composition root")
     void visionIsNotPulledIntoOtherLayers() {
         final String reason =
-                "vision must stay opt-in, so a robot that never uses it pays nothing (ADR-011)";
+                "vision must stay opt-in, so a robot that never uses it pays nothing (ADR-011). "
+                        + "CurioRobot alone may reference it, lazily: it is the composition root, "
+                        + "and the reference only materializes when the team calls robot.vision()";
 
         noClasses()
                 .that()
                 .resideOutsideOfPackage("org.curioone.control.vision..")
+                .and()
+                .doNotHaveSimpleName("CurioRobot")
                 .should()
                 .dependOnClassesThat()
                 .resideInAPackage("org.curioone.control.vision..")

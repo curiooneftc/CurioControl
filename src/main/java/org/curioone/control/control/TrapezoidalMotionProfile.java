@@ -82,6 +82,28 @@ public final class TrapezoidalMotionProfile {
         }
     }
 
+    /**
+     * The reference state at one instant: position, velocity, and acceleration together.
+     *
+     * @param position the reference position
+     * @param velocity the reference velocity, signed with the direction of travel
+     * @param acceleration the reference acceleration, signed with the direction of travel
+     */
+    public record State(double position, double velocity, double acceleration) {
+        /**
+         * Creates a reference state.
+         *
+         * @throws IllegalArgumentException if any component is not finite
+         */
+        public State {
+            if (!Double.isFinite(position)
+                    || !Double.isFinite(velocity)
+                    || !Double.isFinite(acceleration)) {
+                throw new IllegalArgumentException("state components must be finite");
+            }
+        }
+    }
+
     private final double start;
 
     private final double target;
@@ -161,6 +183,20 @@ public final class TrapezoidalMotionProfile {
      */
     public double getTarget() {
         return target;
+    }
+
+    /**
+     * Samples the full reference state at a time.
+     *
+     * <p>One call instead of three when the loop needs position, velocity, and acceleration
+     * together — the usual wiring of a profile into feedback plus feedforward.
+     *
+     * @param time seconds since the profile started; clamped to {@code [0, totalTime]}
+     * @return the reference state
+     * @throws IllegalArgumentException if {@code time} is NaN
+     */
+    public State sample(double time) {
+        return new State(getPosition(time), getVelocity(time), getAcceleration(time));
     }
 
     /**

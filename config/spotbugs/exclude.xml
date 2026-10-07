@@ -36,6 +36,21 @@
         </Or>
     </Match>
 
+    <!-- JMH benchmarks: measurement code, not shipped code.
+         PA fires because JMH state fields must be accessible to the generated runner in the
+         same package — private state is not an option, so the exposure warning is structural
+         noise. ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD fires because benchmarks save and
+         restore the global CurioConfig flags they measure under; JMH forks isolate trials and
+         teardown restores the values, so there is no cross-benchmark leak.
+    -->
+    <Match>
+        <Source name="~.*[\\/]src[\\/]jmh[\\/].*"/>
+        <Or>
+            <Bug pattern="PA_PUBLIC_PRIMITIVE_ATTRIBUTE"/>
+            <Bug pattern="ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD"/>
+        </Or>
+    </Match>
+
     <!--
       Mockito mocks of FTC SDK types. SDK classes are not designed to be implemented, and
       the tests are exercising the wrapper's own delegation logic (TESTING_STRATEGY.md §3.2).
@@ -70,15 +85,22 @@
       or set one motor's direction without reaching for the SDK. That is a public API decision, not
       an oversight.
 
-      `CurioRobot` is here for the most obvious reason of all: the specification's facade is
-      robot.drive() and robot.telemetry(). Returning the live drivetrain and telemetry manager is the
-      API. Returning a copy would be a facade that does not drive the robot.
+       `CurioRobot` is here for the most obvious reason of all: the specification's facade is
+       robot.drive() and robot.telemetry(). Returning the live drivetrain and telemetry manager is the
+       API. Returning a copy would be a facade that does not drive the robot.
+
+       `command` is here because requirements sets are frozen at construction
+       (Collections.unmodifiableSet over a copy) and read on every schedule: returning the set
+       is the ownership API, a caller cannot mutate through it, and copying it per read would
+       put an allocation on the scheduler's hot path for no safety gain.
     -->
     <Match>
         <Or>
             <Class name="~org\.curioone\.control\.hardware\..*"/>
             <Class name="~org\.curioone\.control\.drive\..*"/>
             <Class name="~org\.curioone\.control\.core\.(SdkTelemetrySink|TelemetryManager|SdkHardwareSource|HardwareRegistry|CurioRobot)"/>
+            <Class name="~org\.curioone\.control\.command\..*"/>
+            <Class name="~org\.curioone\.control\.vision\..*"/>
         </Or>
         <Or>
             <Bug pattern="EI_EXPOSE_REP"/>

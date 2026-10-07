@@ -71,6 +71,14 @@ class MotorTest {
         }
 
         @Test
+        @DisplayName("stop zeroes the motor")
+        void stopZeroes() {
+            motor.setPower(0.5);
+            motor.stop();
+            assertEquals(0.0, sdk.lastPower(), DELTA);
+        }
+
+        @Test
         @DisplayName("accepts exactly -1 and 1")
         void acceptsBoundaries() {
             motor.setPower(1.0);

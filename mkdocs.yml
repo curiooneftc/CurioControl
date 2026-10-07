@@ -65,6 +65,9 @@ nav:
       - Drivetrains: guides/drivetrains.md
       - Control tuning: guides/control-tuning.md
       - Motion profiles: guides/motion-profiles.md
+      - Commands vs. states: guides/commands-vs-states.md
+      - Bench testing: guides/bench-testing.md
+      - Vision: guides/vision.md
       - Robot config: guides/robot-config.md
       - Telemetry and logging: guides/telemetry-and-logging.md
   - Concepts:

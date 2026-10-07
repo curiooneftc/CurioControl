@@ -81,6 +81,10 @@ public final class CurioRobot {
 
     private String imuName;
 
+    private org.curioone.control.vision.VisionManager vision;
+
+    private String visionName;
+
     private boolean initialized;
 
     /**
@@ -463,6 +467,67 @@ public final class CurioRobot {
         return imu;
     }
 
+    // --- Vision ------------------------------------------------------------------
+
+    /**
+     * Returns the robot's vision manager, built for the conventional camera name.
+     *
+     * <p>Lazy: nothing vision-related is constructed — no processor, no portal, no camera handle —
+     * until this call. A robot that never calls it pays nothing, which is what keeps vision opt-in
+     * rather than a tax on every program.
+     *
+     * <p>Built for the conventional camera name {@code "Webcam 1"} with the default AprilTag
+     * pipeline. Use {@link #vision(String)} for any other camera, or {@link
+     * #attachVision(org.curioone.control.vision.VisionManager)} for a custom pipeline.
+     *
+     * @return the vision manager, never {@code null}
+     * @throws CurioException if no webcam is configured under {@code "Webcam 1"}
+     */
+    public org.curioone.control.vision.VisionManager vision() {
+        return vision(DEFAULT_CAMERA_NAME);
+    }
+
+    /**
+     * Returns the robot's vision manager for a camera under a custom configuration name.
+     *
+     * <p>Resolved once and cached like {@link #imu(String)}, so the same manager — and therefore
+     * the same portal — is returned on every call.
+     *
+     * @param cameraName the camera's configuration name
+     * @return the vision manager, never {@code null}
+     * @throws CurioException if no webcam is configured under that name
+     */
+    public org.curioone.control.vision.VisionManager vision(String cameraName) {
+        if (vision == null || !cameraName.equals(visionName)) {
+            final org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName camera =
+                    hardware.require(
+                            org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName
+                                    .class,
+                            cameraName);
+            vision = org.curioone.control.vision.VisionManager.forCamera(camera);
+            visionName = cameraName;
+        }
+        return vision;
+    }
+
+    /**
+     * Installs a vision manager.
+     *
+     * <p>Call before {@link #vision()}, for a custom pipeline or a manager built with non-default
+     * options. A later {@link #vision(String)} for a different name rebuilds from configuration as
+     * usual.
+     *
+     * @param vision the manager to use
+     * @throws IllegalArgumentException if {@code vision} is {@code null}
+     */
+    public void attachVision(org.curioone.control.vision.VisionManager vision) {
+        if (vision == null) {
+            throw new IllegalArgumentException("vision must not be null");
+        }
+        this.vision = vision;
+        this.visionName = vision.name();
+    }
+
     // --- Drive -------------------------------------------------------------------
 
     /**
@@ -543,6 +608,9 @@ public final class CurioRobot {
 
     /** Conventional configuration name for the robot's IMU. */
     private static final String DEFAULT_IMU_NAME = "imu";
+
+    /** Conventional configuration name for the robot's camera. */
+    private static final String DEFAULT_CAMERA_NAME = "Webcam 1";
 
     @Override
     public String toString() {

@@ -242,31 +242,31 @@ The remaining unchecked items need a push, a tag, or a robot. They are not code 
 ### Milestone breakdown
 
 #### M3.1 — Command system (`command`) · Weeks 14-16
-- [ ] `Command` interface/abstract: `initialize`, `execute`, `end`, `isFinished`, requirements
-- [ ] `CommandScheduler` — single-threaded, called once per loop from the OpMode
-- [ ] `InstantCommand`, `WaitCommand(timer)`, `SequentialCommand`, `ParallelCommand`
-- [ ] Subsystem ownership/interlocks: two commands needing the same subsystem cannot run concurrently
-- [ ] Cancellation + clean `end()` invocation on stop
-- [ ] Unit tests: sequencing order, parallel completion semantics, requirement conflicts, cancellation mid-run, nested composition
+- [x] `Command` interface/abstract: `initialize`, `execute`, `end`, `isFinished`, requirements
+- [x] `CommandScheduler` — single-threaded, called once per loop from the OpMode
+- [x] `InstantCommand`, `WaitCommand(timer)`, `SequentialCommand`, `ParallelCommand`
+- [x] Subsystem ownership/interlocks: two commands needing the same subsystem cannot run concurrently
+- [x] Cancellation + clean `end()` invocation on stop
+- [x] Unit tests: sequencing order, parallel completion semantics, requirement conflicts, cancellation mid-run, nested composition
 
 **Exit:** A full autonomous routine runs from a command tree, and a test proves the scheduler never runs two conflicting commands.
 
 #### M3.2 — Subsystem polish · Week 16
 - [x] `Subsystem` binding to command scheduler (exclusive access semantics)
-- [ ] Default `Subsystem`-provided command factories: `moveTo(pos)`, `waitUntil(tolerance)`
-- [ ] Documented ownership rules
+- [x] Default `Subsystem`-provided command factories: `moveTo(pos)`, `waitUntil(tolerance)`
+- [x] Documented ownership rules
 
 #### M3.3 — State machine · Weeks 16-18
-- [ ] `StateMachine<S>` with current state, transitions, entry/update/exit actions, per-state timeouts
-- [ ] Explicit vs. event-driven transition triggers
-- [ ] Interop with commands (a state can schedule commands; a command can request a transition)
-- [ ] Unit tests: transition graph traversal, entry/exit action ordering, timeout behavior, illegal-transition handling
+- [x] `StateMachine<S>` with current state, transitions, entry/update/exit actions, per-state timeouts
+- [x] Explicit vs. event-driven transition triggers
+- [x] Interop with commands (a state can schedule commands; a command can request a transition)
+- [x] Unit tests: transition graph traversal, entry/exit action ordering, timeout behavior, illegal-transition handling
 
 **Exit:** The `AutoState` example from SPEC §24 (DRIVE_TO_SCORE → SCORE → RETURN → PARK) runs as both a state machine and a command tree, and the docs compare the two.
 
 #### M3.4 — Telemetry command introspection · Week 17
-- [ ] Scheduler state (running command, elapsed time, requirement conflicts) surfaced to telemetry
-- [ ] Debug category additions
+- [x] Scheduler state (running command, elapsed time, requirement conflicts) surfaced to telemetry
+- [x] Debug category additions
 
 #### M3.5 — Docs + release · Week 18
 - [ ] Architecture guide: "commands vs. state machines — when to use which"
@@ -290,24 +290,24 @@ The remaining unchecked items need a push, a tag, or a robot. They are not code 
 ### Milestone breakdown
 
 #### M4.1 — VisionManager · Weeks 19-20
-- [ ] `VisionManager` — lifecycle (`init`, `process`, `stop`), processor registration
-- [ ] Lazy init: no vision object allocated unless the team touches `robot.vision()`
-- [ ] Configurable update rate (vision must not starve the control loop)
+- [x] `VisionManager` — lifecycle (`init`, `process`, `stop`), processor registration
+- [x] Lazy init: no vision object allocated unless the team touches `robot.vision()`
+- [x] Configurable update rate (vision must not starve the control loop)
 
 #### M4.2 — AprilTagManager · Weeks 20-21
-- [ ] `AprilTagManager` wrapping SDK AprilTag processor
-- [ ] `getTag(int id)` → `Optional<AprilTagDetection>` (SPEC §28)
-- [ ] `getRobotPose()` → `Pose2d`, mapping `math.Pose2d` ⇄ SDK pose types
-- [ ] Field-relative calibration helpers
-- [ ] Unit tests with mocked detections: tag filtering, pose conversion round-trip, empty-result handling
+- [x] `AprilTagManager` wrapping SDK AprilTag processor
+- [x] `getTag(int id)` → `Optional<AprilTagDetection>` (SPEC §28)
+- [x] `getRobotPose()` → `Pose2d`, mapping `math.Pose2d` ⇄ SDK pose types
+- [x] Field-relative calibration helpers
+- [x] Unit tests with mocked detections: tag filtering, pose conversion round-trip, empty-result handling
 
 #### M4.3 — Vision + control integration · Week 21
-- [ ] Aim assist / pose-based target heading helper built on `math` + `control` (no vision imports in `control`)
-- [ ] Guarded so a `control` user never needs a vision dependency
+- [x] Aim assist / pose-based target heading helper built on `math` + `control` (no vision imports in `control`)
+- [x] Guarded so a `control` user never needs a vision dependency
 
 #### M4.4 — Docs + release · Week 22
-- [ ] Vision setup guide (hardware config, camera calibration, field layout)
-- [ ] Performance notes (frame rate, dropped-frame tolerance)
+- [x] Vision setup guide (hardware config, camera calibration, field layout)
+- [x] Performance notes (frame rate, dropped-frame tolerance)
 - [ ] `0.4.0` published
 
 ### v0.4.0 Definition of Done

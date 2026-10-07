@@ -33,15 +33,16 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Run benchmarks
-        # The benchmark module is introduced in Phase 2. Until then this step is a no-op and
-        # the workflow exists so the schedule and the artifact contract are already in place.
-        run: ./gradlew :benchmark:jmh --no-daemon || echo "benchmark module not present yet"
+        # Benchmarks live in src/jmh (a source set of the root project, not a separate
+        # module: that keeps the FTC SDK classpath wiring and the test fakes in one place).
+        # The run reports; it does not fail the build — a regression is reviewed deliberately.
+        run: ./gradlew jmh --no-daemon
 
       - name: Upload results
         if: always()
         uses: actions/upload-artifact@v7
         with:
           name: jmh-results-${{ github.run_id }}
-          path: benchmark/build/results/
+          path: build/results/jmh/
           retention-days: 30
           if-no-files-found: ignore

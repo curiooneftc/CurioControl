@@ -77,6 +77,15 @@ class ContinuousServoTest {
             Mockito.verify(sdk).setPower(power);
         }
 
+        @Test
+        @DisplayName("stop zeroes the servo")
+        void stopZeroes() {
+            wrapper.setPower(0.5);
+            wrapper.stop();
+
+            Mockito.verify(sdk).setPower(0.0);
+        }
+
         @ParameterizedTest
         @ValueSource(doubles = {-1.001, 1.001, 5.0, Double.NaN, Double.POSITIVE_INFINITY})
         @DisplayName("rejects a power out of range rather than silently clamping")

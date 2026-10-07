@@ -21,7 +21,8 @@ examples/
     ├── mecanum-teleop.java
     ├── pid-loop.java
     ├── field-centric-drive.java
-    └── telemetry.java
+    ├── telemetry.java
+    └── sequential-auto.java   (Phase 3: a command-based autonomous routine)
 ```
 
 ## Quick fragments
@@ -70,6 +71,21 @@ robot.telemetry()
         .add("Battery", voltageSensor.getVoltage())
         .update();
 ```
+
+### A command-based autonomous
+
+```java
+Command routine =
+        Commands.sequence(
+                new DriveDistanceCommand(robot.drive(), 24.0),
+                arm.moveTo(850),
+                Commands.instant("Release", intake::release, intake),
+                arm.moveTo(0));
+scheduler.schedule(routine);
+```
+
+The full OpMode is in `snippets/sequential-auto.java`. Each step starts when the
+previous one reports finished; the scheduler owns everything in between.
 
 ## Why snippets are not a full project
 

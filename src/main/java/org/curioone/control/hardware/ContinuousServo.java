@@ -116,6 +116,15 @@ public final class ContinuousServo {
     }
 
     /**
+     * Stops the servo.
+     *
+     * <p>Sets power to zero through the validated path.
+     */
+    public void stop() {
+        setPower(0.0);
+    }
+
+    /**
      * Sets the servo's direction.
      *
      * @param direction {@link DcMotorSimple.Direction#FORWARD} or {@link

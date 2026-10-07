@@ -26,4 +26,14 @@
     -->
     <suppress checks="MagicNumber" files="[\\/]src[\\/]test[\\/]"/>
 
+    <!--
+      JMH benchmarks: measurement parameters are literals by nature (a gain under test, a
+      trajectory amplitude, a row of values), and JMH state fields must be accessible to the
+      generated runner in the same package, so the private-field rule cannot apply. Same
+      rationale as the test exemption above: naming every literal would obscure the
+      measurement. Shipped code in src/main is unaffected.
+    -->
+    <suppress checks="MagicNumber" files="[\\/]src[\\/]jmh[\\/]"/>
+    <suppress checks="VisibilityModifier" files="[\\/]src[\\/]jmh[\\/]"/>
+
 </suppressions>

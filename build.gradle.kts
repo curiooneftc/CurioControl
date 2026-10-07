@@ -9,6 +9,7 @@ val libraryElementsAttribute: Attribute<String> =
 plugins {
     alias(libs.plugins.spotbugs)
     alias(libs.plugins.spotless)
+    alias(libs.plugins.jmh)
     `java-library`
     `maven-publish`
     `jacoco`
@@ -62,6 +63,10 @@ dependencies {
     ftcSdkAars(libs.ftc.vision)
     ftcSdkAars(libs.ftc.inspection)
     ftcSdkAars(libs.ftc.ftccommon)
+    // EasyOpenCV for the org.opencv types in AprilTagDetection's constructor (test fakes
+    // only — unpacked like the SDK above, never published).
+    ftcSdkAars(libs.easyopencv)
+    ftcSdkAars(libs.opencv)
 
     // androidx.annotation is a normal multiplatform library, not an AAR, so it resolves
     // through the ordinary compile classpath rather than the AAR-unpacking configuration.
@@ -118,6 +123,32 @@ dependencies {
     testImplementation(libs.archunit.junit5)
 
     testRuntimeOnly(libs.junit.platform.launcher)
+}
+
+// --- Benchmarks (JMH) ------------------------------------------------------------
+// Micro-benchmarks for the hot paths spec.md §45 requires to be allocation-free. They live in
+// `src/jmh` (created by the JMH plugin), run via `./gradlew jmh` on a schedule — never as part
+// of `check` — and upload JSON results for review. See `benchmark/README.md`.
+//
+// Two classpath notes, both following the test wiring above:
+//   * The SDK rides along exactly like it does for tests: compile-only to build against,
+//     runtime-only so wrapper classes load.
+//   * Benchmarks reuse the test fakes (FakeDcMotor, FakeClock) via the test output rather than
+//     duplicating them: fixtures in one place, or they drift apart.
+jmh {
+    resultFormat.set("JSON")
+}
+
+// The JMH plugin's packaging tasks hold project references and cannot store the configuration
+// cache. Benchmarks run on a schedule, never on the critical path, so opting those tasks out
+// costs nothing and keeps every other task cached.
+tasks.named("jmh") { notCompatibleWithConfigurationCache("JMH plugin tasks are not supported") }
+tasks.named("jmhJar") { notCompatibleWithConfigurationCache("JMH plugin tasks are not supported") }
+
+dependencies {
+    jmhCompileOnly(ftcSdkClasses)
+    jmhRuntimeOnly(ftcSdkClasses)
+    jmhImplementation(files(sourceSets.named("test").map { it.output }))
 }
 
 // --- Build metadata ------------------------------------------------------------

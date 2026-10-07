@@ -119,6 +119,25 @@ class LoggerTest {
             assertEquals("time,state", lines[0]);
             assertEquals("0.0,\"DRIVE, SCORE\"", lines[1]);
         }
+
+        @Test
+        @DisplayName("whole numbers and flags log without conversion at the call site")
+        void primitiveOverloads() {
+            final Logger log = logger();
+            log.registerField("ticks");
+            log.registerField("loops");
+            log.registerField("holding");
+
+            log.record("ticks", 1500);
+            log.record("loops", 100000L);
+            log.record("holding", true);
+            log.update();
+            log.close();
+
+            final String[] lines = out.toString().split("\n");
+            assertEquals("time,ticks,loops,holding", lines[0]);
+            assertEquals("0.0,1500,100000,true", lines[1]);
+        }
     }
 
     @Nested
@@ -173,10 +192,10 @@ class LoggerTest {
             log.close();
 
             final String[] lines = out.toString().split("\n");
-            // Header plus the two surviving rows (v = 2 and v = 3).
+            // Header plus the two surviving rows (v = 2 and v = 3, logged as ints).
             assertEquals(3, lines.length);
-            assertTrue(lines[1].endsWith(",2.0"), "got: " + lines[1]);
-            assertTrue(lines[2].endsWith(",3.0"), "got: " + lines[2]);
+            assertTrue(lines[1].endsWith(",2"), "got: " + lines[1]);
+            assertTrue(lines[2].endsWith(",3"), "got: " + lines[2]);
         }
 
         @Test

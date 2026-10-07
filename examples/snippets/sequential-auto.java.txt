@@ -1,0 +1,52 @@
+// Copy-paste fragment: a command-based autonomous routine.
+//
+// The routine is a composition of commands, scheduled once and driven by the scheduler
+// every loop. Ownership is automatic: each command declares its subsystems, and the
+// scheduler never runs two commands that need the same one. See
+// docs/guides/commands-vs-states.md for the state-machine alternative.
+
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import org.curioone.control.command.Command;
+import org.curioone.control.command.CommandScheduler;
+import org.curioone.control.command.Commands;
+import org.curioone.control.core.CurioOpMode;
+import org.curioone.control.core.CurioRobot;
+
+@Autonomous(name = "Blue Auto")
+public final class BlueAuto extends CurioOpMode {
+
+    private final CommandScheduler scheduler = new CommandScheduler();
+
+    private Arm arm;
+
+    private Intake intake;
+
+    @Override
+    public void initRobot() {
+        robot = new CurioRobot(hardwareMap);
+        arm = new Arm(hardwareMap);
+        intake = new Intake(hardwareMap);
+        robot.registerSubsystem(arm);
+        robot.registerSubsystem(intake);
+
+        // Drive out, lift, release, come home. Each step starts when the previous one
+        // reports finished; the scheduler owns everything in between.
+        Command routine =
+                Commands.sequence(
+                        new DriveDistanceCommand(robot.drive(), 24.0),
+                        arm.moveTo(850),
+                        Commands.sequence(
+                                Commands.instant("Release", intake::release, intake),
+                                Commands.waitSeconds(0.5)),
+                        arm.moveTo(0),
+                        new DriveDistanceCommand(robot.drive(), -24.0));
+        scheduler.schedule(routine);
+    }
+
+    @Override
+    public void runRobot() {
+        scheduler.run();
+        scheduler.publishTelemetry(robot.telemetry());
+        robot.telemetry().update();
+    }
+}

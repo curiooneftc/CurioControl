@@ -147,6 +147,16 @@ public final class Motor {
     }
 
     /**
+     * Stops the motor.
+     *
+     * <p>Sets power to zero through the validated path. The one-liner for subsystem {@code stop()}
+     * hooks, where a bare {@code setPower(0.0)} reads as an arbitrary value rather than an intent.
+     */
+    public void stop() {
+        setPower(0.0);
+    }
+
+    /**
      * Sets a target velocity.
      *
      * <p>Requires {@link DcMotor.RunMode#RUN_USING_ENCODER}.

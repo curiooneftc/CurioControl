@@ -9,6 +9,12 @@ androidxAnnotation = "1.9.1"
 # real dependency is better than suppressing the lint category, which would hide genuine classpath
 # gaps. compileOnly: the Robot Controller provides it at runtime.
 gson = "2.14.0"
+# EasyOpenCV carries org.opencv.core.Point, which appears in AprilTagSingleDetection's
+# constructor. Tests build detections through that constructor (passing nulls for the untouched
+# image fields), so javac needs the class even though no benchmark or test ever touches pixels.
+easyopencv = "1.7.3"
+# The OpenCV classes themselves, which EasyOpenCV depends on rather than bundles.
+opencv = "4.10.0-A"
 # --- Libraries ---
 junit = "5.11.4"
 mockito = "5.24.0"
@@ -18,6 +24,8 @@ spotbugsPlugin = "6.4.2"
 spotless = "8.10.3"
 develocity = "4.6.0"
 foojayResolver = "1.0.0"
+# JMH benchmarks (benchmark harness). Pinned; the plugin brings its own JMH libraries.
+jmhPlugin = "0.7.2"
 
 [libraries]
 # FTC SDK modules — compileOnly only. See ADR-001.
@@ -28,6 +36,8 @@ ftc-inspection = { module = "org.firstinspires.ftc:Inspection", version.ref = "f
 ftc-ftccommon = { module = "org.firstinspires.ftc:FtcCommon", version.ref = "ftcSdk" }
 androidx-annotation = { module = "androidx.annotation:annotation", version.ref = "androidxAnnotation" }
 gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
+easyopencv = { module = "org.openftc:easyopencv", version.ref = "easyopencv" }
+opencv = { module = "org.openftc:opencv-repackaged-bundled-dylibs", version.ref = "opencv" }
 
 # Test
 junit-bom = { module = "org.junit:junit-bom", version.ref = "junit" }
@@ -42,3 +52,4 @@ spotbugs = { id = "com.github.spotbugs", version.ref = "spotbugsPlugin" }
 spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
 develocity = { id = "com.gradle.develocity", version.ref = "develocity" }
 foojay-resolver = { id = "org.gradle.toolchains.foojay-resolver-convention", version.ref = "foojayResolver" }
+jmh = { id = "me.champeau.jmh", version.ref = "jmhPlugin" }

@@ -204,6 +204,48 @@ public final class Logger implements Closeable {
     }
 
     /**
+     * Records a whole-number value for the current row.
+     *
+     * <p>A no-op when {@link CurioConfig#LOGGING_ENABLED} is off.
+     *
+     * @param field a registered column
+     * @param value the value
+     * @throws IllegalArgumentException if {@code field} was never registered
+     * @throws IllegalStateException if the logger is closed
+     */
+    public void record(String field, int value) {
+        record(field, Integer.toString(value));
+    }
+
+    /**
+     * Records a whole-number value for the current row.
+     *
+     * <p>A no-op when {@link CurioConfig#LOGGING_ENABLED} is off.
+     *
+     * @param field a registered column
+     * @param value the value
+     * @throws IllegalArgumentException if {@code field} was never registered
+     * @throws IllegalStateException if the logger is closed
+     */
+    public void record(String field, long value) {
+        record(field, Long.toString(value));
+    }
+
+    /**
+     * Records a true/false value for the current row.
+     *
+     * <p>A no-op when {@link CurioConfig#LOGGING_ENABLED} is off.
+     *
+     * @param field a registered column
+     * @param value the value
+     * @throws IllegalArgumentException if {@code field} was never registered
+     * @throws IllegalStateException if the logger is closed
+     */
+    public void record(String field, boolean value) {
+        record(field, Boolean.toString(value));
+    }
+
+    /**
      * Records a text value for the current row.
      *
      * <p>Values containing commas, quotes, or line breaks are quoted per RFC 4180. A no-op when

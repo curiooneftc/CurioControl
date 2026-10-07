@@ -94,6 +94,20 @@ class TrapezoidalMotionProfileTest {
         }
 
         @Test
+        @DisplayName("sample agrees with the individual getters")
+        void sampleAgrees() {
+            final TrapezoidalMotionProfile profile =
+                    new TrapezoidalMotionProfile(0.0, 100.0, LIMITS);
+
+            final TrapezoidalMotionProfile.State state = profile.sample(0.25);
+
+            assertEquals(profile.getPosition(0.25), state.position(), DELTA);
+            assertEquals(profile.getVelocity(0.25), state.velocity(), DELTA);
+            assertEquals(profile.getAcceleration(0.25), state.acceleration(), DELTA);
+            assertThrows(IllegalArgumentException.class, () -> profile.sample(Double.NaN));
+        }
+
+        @Test
         @DisplayName("short moves form a triangle without cruising")
         void triangular() {
             // 10 units at these limits can never reach 100 u/s: peak is sqrt(10*200).

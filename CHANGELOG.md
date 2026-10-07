@@ -5,6 +5,101 @@ All notable changes to CurioControl are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - Vision
+
+Optional, opt-in vision: nothing is built until `robot.vision()` is called.
+
+### Added
+- **`VisionManager`.** Portal lifecycle (`init`, rate-gated `process`, `stop`, `close`)
+  with processor attach/detach, configurable update ceiling, camera state, and frame
+  rate. Built per camera via `forCamera`, with the SDK edge behind a
+  `VisionPortalFactory` seam so construction is unit-testable.
+- **`AprilTagManager`.** Detection snapshots (copied, since the SDK mutates its list on
+  the vision thread), `getTag(id)` filtering, and `getRobotPose(layout, cameraOffset)`
+  solving the field pose through the composed robot-to-tag transform — closest usable
+  detection wins, unsolvable frames yield empty.
+- **`TagFieldLayout`.** Immutable id-to-pose map in inches, with a millimetre-building
+  variant. No season data ships; the layout always comes from the caller.
+- **`AimAssist` (in `control`).** Pose-based desired heading, wrapped turn error, and
+  distance — numbers in, numbers out, no vision imports anywhere near `control`.
+- **`CurioRobot.vision()` / `vision(name)` / `attachVision()`.** Lazy conventional
+  `"Webcam 1"` resolution mirroring `imu()`, with `null`-until-touched overhead.
+
+### Decisions
+- **Pose convention, stated not assumed.** The SDK reports X right, Y forward, in
+  inches, yaw counter-clockwise (FTC docs); the framework frame matches axis for axis
+  with the yaw negated, and the camera-to-tag rotation is `π − yaw` because a parallel
+  tag faces the camera. Verified against three hand-computed geometries in tests.
+- **`vision` gets its own exception.** `core.CurioException` sits behind the layering
+  wall, so `VisionException` carries the same unchecked, name-the-missing-piece
+  contract without the dependency.
+- **`CurioRobot` is the sole exception to the vision isolation rule**, like it already
+  is for the other outward dependencies — amended in the layering test by class name,
+  with the laziness that keeps the opt-in property behavioral rather than merely
+  declared.
+
+### Testing
+- New suites for layout validation, id filtering (including cluster non-matches),
+  hand-computed pose solves (square-on, yawed, rotated, offset, nearest-wins),
+  lifecycle delegation, rate gating, factory wiring, accessor caching, and aim
+  geometry. JaCoCo gate, Checkstyle, SpotBugs, Spotless, and `-Werror` JavaDoc green.
+- Field validation (surveyed stations, yawed tags, loop-timing parity) is hardware-
+  gated and listed as a checklist in the vision guide, not claimed here.
+
+### Documentation
+- New vision guide: wiring, hardware config and calibration, field layout, the pose
+  convention, performance practice, aim-assist wiring, and the hardware validation
+  checklist.
+
+## [0.3.0] - Architecture
+
+The composition layer: commands, scheduler, state machines, and the benchmark harness.
+
+### Added
+- **`Command` + `CommandScheduler`.** Single-threaded, one `run()` per OpMode loop, with
+  staged schedule/cancel queues so hooks that schedule from inside a pass take effect on the
+  next one — one deterministic ordering. Conflicting schedules preempt (interrupted end);
+  cancellations end cleanly; defaults start when their subsystem goes free and resume after
+  preemption. An idle pass allocates nothing.
+- **Compositions.** `SequentialCommand` (ordered, one-cycle boundary between children),
+  `ParallelCommand` (all-complete semantics; no race mode by design), `InstantCommand`,
+  timer-based `WaitCommand`, and the `Commands` factories (`instant`, `waitSeconds`,
+  `waitUntil`, `sequence`, `parallel`).
+- **`StateMachine<S>`.** Entry/update/exit actions, ordered guards, per-state timeouts, and
+  explicit `requestTransition` — at most one transition per `update()`, so traversals are
+  assertable. Wires to commands without owning the scheduler.
+- **Scheduler introspection.** `publishTelemetry` reports running names with tenures, the
+  lifetime preemption count, and the last preempted command under `DEBUG`.
+- **JMH benchmark harness.** `PidBenchmark`, `MecanumBenchmark`, `SchedulerBenchmark`
+  (steady + churn), `TelemetryBenchmark`, and `LoggerDisabledBenchmark` in `src/jmh`, run
+  weekly via `perf.yml`. Budgets are tracked as trends, not gates.
+
+### Decisions
+- **No race mode.** A parallel group finishes when all children finish. A "first one wins"
+  mode behaves differently under cancellation, and conflating the two strands routines
+  half-done with no error.
+- **Empty compositions throw.** A sequence or group with no children is a bug at
+  construction time, not a silent no-op on the field.
+- **Factories live in `command`, not on `Subsystem`.** Mechanism factories (`moveTo`)
+  belong on the subsystem as team code; the base class stays free of `command` so the
+  package dependency never points both ways. The guide shows the pattern.
+- **Benchmarks are measured, not gated, and linted as measurement code** — documented
+  `src/jmh` exceptions for state-field visibility and measurement literals.
+
+### Testing
+- 51 new unit tests (510 total), no Robot Controller required: sequencing order, parallel
+  completion, preemption, mid-run and mid-pass cancellation, staging from hooks, defaults
+  lifecycle, telemetry output, full autonomous graph traversal, timeout watchdogs, and
+  transition ordering.
+- JaCoCo gate, Checkstyle, SpotBugs, Spotless, and `-Werror` JavaDoc all green,
+  including the new `jmh` source set.
+
+### Documentation
+- New commands-vs-states guide: scheduler wiring, ownership rules, subsystem factories,
+  the SPEC §24 autonomous written both ways, and when to switch.
+- New bench-testing guide: drivetrain and IMU procedures in dependency order.
+- New `sequential-auto` example snippet; benchmark README with budgets.
+
 ## [0.2.0] - Control
 
 The control and math toolkit: feedforward, motion profiles, pose geometry, and logging.
@@ -158,6 +253,8 @@ First usable release: a mecanum robot that drives, and the layer everything else
 - Repository scaffolding docs: `README.md`, `CONTRIBUTING.md`, `LICENSE`
   (BSD 3-Clause), `MIGRATION.md`, `BRANCH_PROTECTION.md`, and a MkDocs site skeleton.
 
-[Unreleased]: https://github.com/curiooneftc/CurioControl/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/curiooneftc/CurioControl/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/curiooneftc/CurioControl/releases/tag/v0.4.0
+[0.3.0]: https://github.com/curiooneftc/CurioControl/releases/tag/v0.3.0
 [0.2.0]: https://github.com/curiooneftc/CurioControl/releases/tag/v0.2.0
 [0.1.0]: https://github.com/curiooneftc/CurioControl/releases/tag/v0.1.0
