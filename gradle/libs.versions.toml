@@ -20,7 +20,7 @@ junit = "5.11.4"
 mockito = "5.24.0"
 archunit = "1.5.1"
 # --- Plugins ---
-spotbugsPlugin = "6.4.2"
+spotbugsPlugin = "6.5.12"
 spotless = "8.10.3"
 develocity = "4.6.0"
 foojayResolver = "1.0.0"
