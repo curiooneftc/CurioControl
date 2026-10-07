@@ -3,7 +3,7 @@
 java = "17"
 # --- FTC SDK (compileOnly: provided by the Robot Controller app at runtime) ---
 ftcSdk = "12.0.0"
-androidxAnnotation = "1.9.1"
+androidxAnnotation = "1.11.0"
 # The SDK's SerialNumber class carries a Gson annotation. Without gson on the compile classpath
 # javac emits a classfile-lint warning that -Werror turns into a build failure. Declaring the
 # real dependency is better than suppressing the lint category, which would hide genuine classpath
