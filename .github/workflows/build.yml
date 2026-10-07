@@ -34,7 +34,7 @@ jobs:
           java-version: '17'
 
       - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@v6
 
       - name: Build
         # `build` covers compileJava, test, checkstyleMain/Test, spotbugsMain/Test,
@@ -87,7 +87,7 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v6
       - name: Build the example against the published artifact
         working-directory: examples/robot
         run: ./gradlew assembleDebug
