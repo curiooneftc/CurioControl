@@ -3,6 +3,7 @@ package org.curioone.control.drive;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import org.curioone.control.hardware.HeadingSource;
 import org.curioone.control.hardware.Motor;
 import org.curioone.control.util.Range;
 
@@ -178,6 +179,28 @@ public final class MecanumDrive extends DriveBase {
         // the robot-frame inputs the wheel equations expect. At h = 0 this is the identity, which
         // is the check that matters: with no rotation, field-centric and robot-centric agree.
         mecanum(strafe * cos - forward * sin, strafe * sin + forward * cos, rotation);
+    }
+
+    /**
+     * Applies field-centric mecanum input with the heading read from a source.
+     *
+     * <p>Same rotation math as {@link #fieldCentric(double, double, double, double)}, but the
+     * heading comes from a {@link HeadingSource} — an {@link org.curioone.control.hardware.IMU}, a
+     * fused estimator, or a test lambda — instead of a raw number, so the call site says where the
+     * heading comes from.
+     *
+     * @param strafe field-relative left/right input in {@code [-1, 1]}, where {@code 1} is right
+     * @param forward field-relative forward/backward input in {@code [-1, 1]}
+     * @param rotation rotation input in {@code [-1, 1]}, where {@code 1} is counter-clockwise
+     * @param headingSource the field-relative heading source
+     * @throws IllegalArgumentException if any input is not finite, or the source is {@code null}
+     */
+    public void fieldCentric(
+            double strafe, double forward, double rotation, HeadingSource headingSource) {
+        if (headingSource == null) {
+            throw new IllegalArgumentException("headingSource must not be null");
+        }
+        fieldCentric(strafe, forward, rotation, headingSource.heading());
     }
 
     @Override

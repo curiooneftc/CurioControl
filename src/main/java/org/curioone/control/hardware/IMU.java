@@ -24,11 +24,19 @@ import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
  * An unreset IMU makes field-centric drive drift by a fixed offset, which is easy to misread as a
  * motor problem. Reset the heading at the start of every OpMode, autonomous included.
  *
+ * <h2>Calibration state</h2>
+ *
+ * Calibration is a one-way latch: a fresh wrapper starts uncalibrated, a successful {@link
+ * #calibrate} or {@link #requireCalibration} moves it to calibrated, and a failed calibration
+ * leaves the previous state untouched. {@link #isCalibrated()} reports the latch. Reading angles
+ * before calibration still delegates to the SDK — the wrapper cannot know better than the sensor —
+ * but callers that need the guarantee can check the latch first.
+ *
  * <p><strong>Thread safety:</strong> not thread-safe. Call from the OpMode thread only.
  *
  * @since 0.1.0
  */
-public final class IMU {
+public final class IMU implements HeadingSource {
 
     /** Radians in a full turn, for degree conversion. */
     private static final double RADIANS_PER_TURN = 2.0 * Math.PI;
@@ -38,6 +46,8 @@ public final class IMU {
     private final com.qualcomm.robotcore.hardware.IMU imu;
 
     private final String name;
+
+    private boolean calibrated;
 
     /**
      * Wraps an SDK IMU.
@@ -120,7 +130,11 @@ public final class IMU {
         if (parameters == null) {
             throw new IllegalArgumentException("parameters must not be null");
         }
-        return imu.initialize(parameters);
+        final boolean succeeded = imu.initialize(parameters);
+        if (succeeded) {
+            calibrated = true;
+        }
+        return succeeded;
     }
 
     /**
@@ -149,6 +163,19 @@ public final class IMU {
     }
 
     /**
+     * Reports whether calibration has succeeded on this wrapper.
+     *
+     * <p>Starts {@code false}. A successful {@link #calibrate} or {@link #requireCalibration} sets
+     * it; a failed calibration leaves it as it was, so a retry loop can poll this instead of
+     * re-reading angles.
+     *
+     * @return {@code true} once calibration has succeeded
+     */
+    public boolean isCalibrated() {
+        return calibrated;
+    }
+
+    /**
      * Makes the current heading zero.
      *
      * <p>Call at the start of every run.
@@ -162,6 +189,7 @@ public final class IMU {
      *
      * @return heading in radians, relative to the last {@link #resetHeading()}
      */
+    @Override
     public double heading() {
         return yaw();
     }
