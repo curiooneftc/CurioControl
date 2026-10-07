@@ -5,8 +5,15 @@ package org.curioone.control.math;
  *
  * <p>Which units the coordinates use — inches, millimetres — is the caller's choice, but one pose
  * must never mix them: combining an inch pose with a millimetre transform silently scales the
- * result by 25.4. The field convention is +x right, +y forward, heading counter-clockwise from
- * forward, matching the FTC IMU.
+ * result by 25.4. The field convention is +x right, +y forward.
+ *
+ * <h2>Heading convention</h2>
+ *
+ * <p>Headings follow {@code MecanumDrive.fieldCentric} exactly: heading 0 faces field-forward (+y),
+ * and positive headings rotate toward field-right (+x), so the forward axis at heading {@code h} is
+ * {@code (sin h, cos h)}. Because of that axis choice, a body-frame translation is rotated by
+ * <em>minus</em> the heading when it is moved into the field frame — the same rotation the
+ * drivetrain applies in reverse. The sign lives in these methods, not at call sites.
  *
  * <p>Immutable: every operation returns a new instance.
  *
@@ -115,9 +122,11 @@ public final class Pose2d {
     /**
      * Applies a transform to this pose.
      *
-     * <p>The transform's translation is rotated into the field frame by this pose's heading before
-     * being added — that rotation is the entire difference between "drive forward 24 inches" and
-     * "drive toward field-forward 24 inches".
+     * <p>The transform's translation is rotated into the field frame by the negation of this pose's
+     * heading before being added — that rotation is the entire difference between "drive forward 24
+     * inches" and "drive toward field-forward 24 inches". It is the inverse of the rotation {@code
+     * MecanumDrive.fieldCentric} applies, so a pose propagated here agrees with where the
+     * drivetrain actually drove.
      *
      * @param transform the relative motion, in this pose's frame
      * @return the resulting pose
@@ -128,7 +137,7 @@ public final class Pose2d {
             throw new IllegalArgumentException("transform must not be null");
         }
         return new Pose2d(
-                translation.plus(transform.getTranslation().rotateBy(rotation)),
+                translation.plus(transform.getTranslation().rotateBy(rotation.unaryMinus())),
                 rotation.plus(transform.getRotation()));
     }
 
@@ -136,7 +145,8 @@ public final class Pose2d {
      * Returns the transform that maps another pose onto this one.
      *
      * <p>The translation is expressed in {@code other}'s frame: it answers "where am I, as seen
-     * from {@code other}".
+     * from {@code other}". The field displacement is rotated by {@code other}'s heading — the
+     * forward direction of {@link #transformBy}.
      *
      * @param other the reference pose
      * @return the relative transform from {@code other} to this pose
@@ -146,9 +156,8 @@ public final class Pose2d {
         if (other == null) {
             throw new IllegalArgumentException("other must not be null");
         }
-        final Rotation2d inverse = other.rotation.unaryMinus();
         return new Transform2d(
-                translation.minus(other.translation).rotateBy(inverse),
+                translation.minus(other.translation).rotateBy(other.rotation),
                 rotation.minus(other.rotation));
     }
 

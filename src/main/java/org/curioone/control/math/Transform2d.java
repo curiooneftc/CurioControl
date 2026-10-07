@@ -90,7 +90,10 @@ public final class Transform2d {
     /**
      * Composes this transform with another.
      *
-     * <p>The result applies {@code this} first, then {@code other} in the resulting frame.
+     * <p>The result applies {@code this} first, then {@code other} in the resulting frame. The
+     * second translation is rotated by the negation of this transform's rotation, matching {@link
+     * Pose2d#transformBy}: body frames rotate into the field frame backwards under the +x-right /
+     * +y-forward convention (see {@code Pose2d}).
      *
      * @param other the transform to apply after this one
      * @return the composed transform
@@ -99,7 +102,7 @@ public final class Transform2d {
     public Transform2d plus(Transform2d other) {
         requireOther(other);
         return new Transform2d(
-                translation.plus(other.translation.rotateBy(rotation)),
+                translation.plus(other.translation.rotateBy(rotation.unaryMinus())),
                 rotation.plus(other.rotation));
     }
 
@@ -111,9 +114,7 @@ public final class Transform2d {
      * @return the inverse
      */
     public Transform2d inverse() {
-        final Rotation2d invertedRotation = rotation.unaryMinus();
-        return new Transform2d(
-                translation.unaryMinus().rotateBy(invertedRotation), invertedRotation);
+        return new Transform2d(translation.unaryMinus().rotateBy(rotation), rotation.unaryMinus());
     }
 
     /**

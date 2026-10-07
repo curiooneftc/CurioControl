@@ -1,6 +1,6 @@
 # Control Tuning
 
-> Status: this page describes the target v1.0.0 API. `PIDController` lands in v0.1.0, `PIDF` and
+> Status: `PIDController` landed in v0.1.0, `PIDFController`, feedforward models, and
 > motion profiles in v0.2.0; see [the phases document](../../PHASES.md).
 
 A PID loop turns "I want position X" into "apply this much power, re-evaluated every loop". It is
@@ -93,9 +93,33 @@ exists:
 output = kP·error + kI·integral + kD·derivative + kF·feedforward
 ```
 
-This eliminates steady-state error that feedforward can address, and it is usually the single
-biggest tuning improvement available on a drivetrain follower or a flywheel. See
-[ADR and the phases document](../../PHASES.md) for the v0.2.0 milestone.
+The reference comes from a `Feedforward` model, or from a value you computed yourself:
+
+```java
+PIDFController arm = new PIDFController(0.01, 0.0, 0.001, 1.0);
+arm.setFeedforward(new GravityFeedforward(holdPower));  // output that holds the arm horizontal
+
+void run() {
+    double position = motor.getPosition();
+    motor.setPower(arm.calculate(targetTicks, position, position, 0.0, 0.0));
+}
+```
+
+Tune the model before the loop, in this order — each term assumes the earlier ones already
+carry their share:
+
+1. **`kS` (static).** The minimum power that moves the mechanism at all. Raise `ConstantFeedforward`
+   until it just breaks stiction.
+2. **`kV` (velocity).** Drive at a known cruise velocity, divide the holding output by that
+   velocity. `VelocityFeedforward` carries the cruise so the integral never has to wind up to it.
+3. **`kA` (acceleration).** The hardest to tune by hand; start from the profile's acceleration
+   reference (see below) and adjust until the start and end of a move track instead of lagging.
+4. **`kG` (gravity, arms only).** The output that holds the arm horizontal. `GravityFeedforward`
+   scales it by the cosine of the arm angle from horizontal.
+
+Then tune P/I/D on top with small gains — the feedback now only corrects the model's errors.
+A shared-gain simulation in `PIDFControllerTest` shows the payoff: P-only control sits off-target
+under a constant load, while the same gains with the load fed forward converge.
 
 ## Next
 

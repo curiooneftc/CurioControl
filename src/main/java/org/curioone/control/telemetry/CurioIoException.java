@@ -12,6 +12,8 @@ package org.curioone.control.telemetry;
  */
 public final class CurioIoException extends RuntimeException {
 
+    private static final long serialVersionUID = 1L;
+
     /**
      * Creates an I/O failure with a message.
      *

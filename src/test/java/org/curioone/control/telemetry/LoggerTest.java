@@ -3,6 +3,7 @@ package org.curioone.control.telemetry;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.File;
 import java.io.StringWriter;
@@ -224,10 +225,20 @@ class LoggerTest {
         @Test
         @DisplayName("toFile rejects bad arguments")
         void toFileRejectsBadArguments() {
-            assertThrows(IllegalArgumentException.class, () -> Logger.toFile(null, "auto", clock));
-            assertThrows(
-                    IllegalArgumentException.class,
-                    () -> Logger.toFile(new File("logs"), "", clock));
+            // try/catch rather than assertThrows: toFile returns the logger, and discarding it
+            // inside an assertion lambda trips the unused-return check.
+            try {
+                Logger.toFile(null, "auto", clock);
+                fail("toFile(null, ...) must throw");
+            } catch (IllegalArgumentException expected) {
+                assertEquals("directory must not be null", expected.getMessage());
+            }
+            try {
+                Logger.toFile(new File("logs"), "", clock);
+                fail("toFile with an empty prefix must throw");
+            } catch (IllegalArgumentException expected) {
+                assertEquals("prefix must not be null or empty", expected.getMessage());
+            }
         }
     }
 }

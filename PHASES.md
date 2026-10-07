@@ -179,40 +179,40 @@ The remaining unchecked items need a push, a tag, or a robot. They are not code 
 ### Milestone breakdown
 
 #### M2.1 — PIDFController + Feedforward · Weeks 9-10
-- [ ] `PIDFController` = `kP·e + kI·∫e + kD·ė + kF·ff`
-- [ ] `Feedforward` interface + implementations: `Constant`, `Velocity`, `Acceleration`, `Gravity`
-- [ ] Combined model `kS + kV·v + kA·a`
+- [x] `PIDFController` = `kP·e + kI·∫e + kD·ė + kF·ff`
+- [x] `Feedforward` interface + implementations: `Constant`, `Velocity`, `Acceleration`, `Gravity`
+- [x] Combined model `kS + kV·v + kA·a`
 - [x] Pure Java, no FTC imports; fully unit tested
 
 **Exit:** Shared-gain simulation proves PIDF converges where plain PID shows steady-state error under load.
 
 #### M2.2 — MotionProfile · Weeks 10-11
-- [ ] `MotionProfile` trapezoidal: `getPosition(t)`, `getVelocity(t)`, `getAcceleration(t)`, `isFinished(t)`
-- [ ] Handles `target < start` (reverse direction), zero distance, zero max velocity/accel
-- [ ] Validation of parameters (non-negative limits, etc.)
-- [ ] Unit tests across the accel / cruise / decel phases, boundary times, exact-arrival tolerance
+- [x] `MotionProfile` trapezoidal: `getPosition(t)`, `getVelocity(t)`, `getAcceleration(t)`, `isFinished(t)`
+- [x] Handles `target < start` (reverse direction), zero distance, zero max velocity/accel
+- [x] Validation of parameters (non-negative limits, etc.)
+- [x] Unit tests across the accel / cruise / decel phases, boundary times, exact-arrival tolerance
 
 **Exit:** `TrapezoidalProfileTest` covers all three phases and the full transition times analytically.
 
 #### M2.3 — Geometry (`math`) · Weeks 11-12
-- [ ] `Pose2d`, `Vector2d`, `Rotation2d`, `Transform2d`
-- [ ] `Interpolation`, `Clamp`, `Units`, `Geometry` helpers
-- [ ] Zero Android/FTC imports — hard requirement, enforced by an ArchUnit-style test
-- [ ] Unit tests: rotation composition, vector rotation, transform application, unit conversions, interpolation endpoints
+- [x] `Pose2d`, `Vector2d`, `Rotation2d`, `Transform2d`
+- [x] `Interpolation`, `Clamp`, `Units`, `Geometry` helpers
+- [x] Zero Android/FTC imports — hard requirement, enforced by an ArchUnit-style test
+- [x] Unit tests: rotation composition, vector rotation, transform application, unit conversions, interpolation endpoints
 
 **Exit:** A dependency-guard test fails the build if any class in `math` imports FTC/Android.
 
 #### M2.4 — IMU abstraction hardening · Week 12
-- [ ] Calibration state machine, heading reset, heading source abstraction (so `math`/`control` never see an `IMU`)
-- [ ] Unit tests with a fake IMU driving heading changes
+- [x] Calibration state machine, heading reset, heading source abstraction (so `math`/`control` never see an `IMU`)
+- [x] Unit tests with a fake IMU driving heading changes
 
 #### M2.5 — Structured logging (`telemetry`) · Weeks 12-13
-- [ ] `Logger` with `record(key, value)`; **disabled by default** (SPEC §27)
-- [ ] CSV writer to `/sdcard/CurioControl/logs/`
-- [ ] Low-overhead: preallocated buffers, no per-iteration string building
-- [ ] Ring-buffer/flush policy so logging can't OOM the RC
-- [ ] Configurable channel/field registration
-- [ ] Unit tests: CSV header correctness, row formatting, buffering, disabled-mode zero-cost behavior
+- [x] `Logger` with `record(key, value)`; **disabled by default** (SPEC §27)
+- [x] CSV writer to `/sdcard/CurioControl/logs/`
+- [x] Low-overhead: preallocated buffers, no per-iteration string building
+- [x] Ring-buffer/flush policy so logging can't OOM the RC
+- [x] Configurable channel/field registration
+- [x] Unit tests: CSV header correctness, row formatting, buffering, disabled-mode zero-cost behavior
 
 **Exit:** CSV output matches the spec's example format exactly; logging overhead measured and documented.
 

@@ -71,8 +71,9 @@ class MathUtilTest {
         @Test
         @DisplayName("wrapToPi keeps the sign of the shorter way")
         void wrapToPiKeepsSign() {
+            // Exactly -pi canonicalizes to +pi: one name for facing backwards.
             assertEquals(Math.PI, MathUtil.wrapToPi(3.0 * Math.PI), DELTA);
-            assertEquals(-Math.PI, MathUtil.wrapToPi(-3.0 * Math.PI), DELTA);
+            assertEquals(Math.PI, MathUtil.wrapToPi(-3.0 * Math.PI), DELTA);
             assertEquals(0.0, MathUtil.wrapToPi(2.0 * Math.PI), DELTA);
         }
 

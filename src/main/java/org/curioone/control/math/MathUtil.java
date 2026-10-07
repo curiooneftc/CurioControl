@@ -68,7 +68,8 @@ public final class MathUtil {
     /**
      * Wraps an angle to {@code [-π, π]}.
      *
-     * <p>Use for signed differences: the sign of the result says which way is shorter.
+     * <p>Use for signed differences: the sign of the result says which way is shorter. Exactly −π
+     * canonicalizes to +π, so the two names for "facing backwards" compare equal.
      *
      * @param radians the angle in radians
      * @return the equivalent angle in {@code [-π, π]}
@@ -80,7 +81,7 @@ public final class MathUtil {
         if (wrapped > PI) {
             return wrapped - TAU;
         }
-        if (wrapped < -PI) {
+        if (wrapped <= -PI) {
             return wrapped + TAU;
         }
         return wrapped;

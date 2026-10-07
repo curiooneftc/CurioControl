@@ -2,6 +2,7 @@ package org.curioone.control.math;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -24,8 +25,8 @@ class Vector2dTest {
             final Vector2d scaled = new Vector2d(1.0, 2.0).times(2.0);
 
             assertEquals(new Vector2d(4.0, 6.0), sum);
-            assertEquals(new Vector2d(-2.0, -2.0), sum.minus(scaled).minus(scaled));
             assertEquals(new Vector2d(2.0, 4.0), scaled);
+            assertEquals(new Vector2d(0.0, -2.0), sum.minus(scaled).minus(scaled));
         }
 
         @Test
@@ -46,7 +47,13 @@ class Vector2dTest {
         void rejectsBadArguments() {
             final Vector2d vector = new Vector2d(1.0, 1.0);
 
-            assertThrows(IllegalArgumentException.class, () -> vector.div(0.0));
+            // The concatenation consumes the quotient: discarding a freshly created
+            // value trips the unused-return check, inside a lambda or a try block alike.
+            try {
+                fail("div(0) must throw, got " + vector.div(0.0));
+            } catch (IllegalArgumentException expected) {
+                assertEquals("divisor must not be zero", expected.getMessage());
+            }
             assertThrows(IllegalArgumentException.class, () -> vector.plus(null));
             assertThrows(IllegalArgumentException.class, () -> new Vector2d(Double.NaN, 0.0));
         }

@@ -64,6 +64,7 @@ nav:
       - Hardware abstraction: guides/hardware-abstraction.md
       - Drivetrains: guides/drivetrains.md
       - Control tuning: guides/control-tuning.md
+      - Motion profiles: guides/motion-profiles.md
       - Robot config: guides/robot-config.md
       - Telemetry and logging: guides/telemetry-and-logging.md
   - Concepts:

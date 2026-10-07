@@ -3,6 +3,7 @@ package org.curioone.control.control;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import org.curioone.control.support.FakeClock;
 import org.junit.jupiter.api.BeforeEach;
@@ -77,9 +78,16 @@ class PIDFControllerTest {
         void missingModelFails() {
             final PIDFController controller = new PIDFController(0.5, 0.0, 0.0, 1.0, clock);
 
-            assertThrows(
-                    IllegalStateException.class,
-                    () -> controller.calculate(10.0, 0.0, 0.0, 0.0, 0.0));
+            // try/catch rather than assertThrows: calculate returns a value, and discarding it
+            // inside an assertion lambda trips the unused-return check.
+            try {
+                controller.calculate(10.0, 0.0, 0.0, 0.0, 0.0);
+                fail("calculate without a model must throw");
+            } catch (IllegalStateException expected) {
+                assertTrue(
+                        expected.getMessage().contains("no feedforward model"),
+                        "got: " + expected.getMessage());
+            }
         }
 
         @Test
@@ -109,7 +117,9 @@ class PIDFControllerTest {
             double position = 0.0;
             final double load = 0.3;
             final double dtSeconds = 0.02;
-            for (int step = 0; step < 400; step++) {
+            // A P-only loop closes 1% of the error per step here, so 1000 steps settle well
+            // past the transient for both controllers.
+            for (int step = 0; step < 1000; step++) {
                 final double output = controller.calculate(target, position, feedforward);
                 position += (output - load) * dtSeconds * 10.0;
                 clock.advanceMillis(20);

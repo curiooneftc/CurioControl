@@ -1,6 +1,6 @@
 # Telemetry and Logging
 
-> Status: `TelemetryManager` lands in v0.1.0, the CSV `Logger` in v0.2.0; see
+> Status: `TelemetryManager` landed in v0.1.0, the CSV `Logger` in v0.2.0; see
 > [the phases document](../../PHASES.md).
 
 Telemetry is how you see what the robot thinks. Logging is how you find out what it thought

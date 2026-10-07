@@ -2,6 +2,7 @@ package org.curioone.control.control;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -98,10 +99,13 @@ class FeedforwardTest {
             assertThrows(
                     IllegalArgumentException.class,
                     () -> new CombinedFeedforward(Double.NaN, 0.0, 0.0));
-
             final Feedforward model = new CombinedFeedforward(0.2, 0.002, 0.0005);
-            assertThrows(
-                    IllegalArgumentException.class, () -> model.calculate(0.0, Double.NaN, 0.0));
+            try {
+                model.calculate(0.0, Double.NaN, 0.0);
+                fail("calculate with NaN velocity must throw");
+            } catch (IllegalArgumentException expected) {
+                assertEquals("velocity must be finite but was NaN", expected.getMessage());
+            }
         }
     }
 }

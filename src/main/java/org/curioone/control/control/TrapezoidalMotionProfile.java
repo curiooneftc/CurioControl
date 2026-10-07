@@ -31,6 +31,9 @@ package org.curioone.control.control;
  */
 public final class TrapezoidalMotionProfile {
 
+    /** One half, for the constant-acceleration distance formula. */
+    private static final double HALF = 0.5;
+
     /** Velocity and acceleration limits a profile is built under. */
     public static final class Constraints {
 
@@ -231,9 +234,9 @@ public final class TrapezoidalMotionProfile {
     private double distanceAt(double time) {
         final double maxAcceleration = accelerationMagnitude();
         if (time < accelerationTime) {
-            return 0.5 * maxAcceleration * time * time;
+            return HALF * maxAcceleration * time * time;
         }
-        final double accelDistance = 0.5 * maxAcceleration * accelerationTime * accelerationTime;
+        final double accelDistance = HALF * maxAcceleration * accelerationTime * accelerationTime;
         if (time < accelerationTime + cruiseTime) {
             return accelDistance + peakVelocity * (time - accelerationTime);
         }
@@ -241,7 +244,7 @@ public final class TrapezoidalMotionProfile {
         return accelDistance
                 + peakVelocity * cruiseTime
                 + peakVelocity * decelTime
-                - 0.5 * maxAcceleration * decelTime * decelTime;
+                - HALF * maxAcceleration * decelTime * decelTime;
     }
 
     private double velocityAt(double time) {

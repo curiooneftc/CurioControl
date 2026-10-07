@@ -1,7 +1,7 @@
 package org.curioone.control.math;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -16,12 +16,25 @@ class Pose2dTest {
     @Nested
     @DisplayName("transform application")
     class Application {
+        @Test
+        @DisplayName("at zero heading the transform applies unchanged")
+        void zeroHeadingIsIdentity() {
+            final Pose2d start = Pose2d.fromHeading(1.0, 2.0, 0.0);
+            final Pose2d end =
+                    start.transformBy(new Transform2d(24.0, 12.0, Rotation2d.fromDegrees(30.0)));
+
+            assertEquals(25.0, end.getX(), DELTA);
+            assertEquals(14.0, end.getY(), DELTA);
+            assertEquals(30.0, end.getRotation().getDegrees(), DELTA);
+        }
 
         @Test
-        @DisplayName("driving forward moves along the heading")
-        void forwardAlongHeading() {
-            final Pose2d start = Pose2d.fromHeading(0.0, 0.0, 0.0);
-            final Pose2d end = start.transformBy(new Transform2d(24.0, 0.0, Rotation2d.ZERO));
+        @DisplayName("driving forward moves along the heading, even when rotated")
+        void forwardFollowsHeading() {
+            // Facing field-right: robot-forward is field +x, so 24 of robot-forward lands on
+            // +x — the same answer field-centric drive gives the wheels.
+            final Pose2d start = Pose2d.fromHeading(0.0, 0.0, Math.PI / 2.0);
+            final Pose2d end = start.transformBy(new Transform2d(0.0, 24.0, Rotation2d.ZERO));
 
             assertEquals(24.0, end.getX(), DELTA);
             assertEquals(0.0, end.getY(), DELTA);
@@ -30,12 +43,13 @@ class Pose2dTest {
         @Test
         @DisplayName("a robot-frame strafe rotates into the field frame")
         void strafeRotatesIntoFieldFrame() {
-            // Facing field-right (90 deg CCW from forward): robot-forward is field +x.
+            // Facing field-right: robot-right points field-backward, so 24 of robot-right
+            // lands on -y.
             final Pose2d start = Pose2d.fromHeading(0.0, 0.0, Math.PI / 2.0);
-            final Pose2d end = start.transformBy(new Transform2d(0.0, 24.0, Rotation2d.ZERO));
+            final Pose2d end = start.transformBy(new Transform2d(24.0, 0.0, Rotation2d.ZERO));
 
-            assertEquals(24.0, end.getX(), DELTA);
-            assertEquals(0.0, end.getY(), DELTA);
+            assertEquals(0.0, end.getX(), DELTA);
+            assertEquals(-24.0, end.getY(), DELTA);
         }
 
         @Test
@@ -149,10 +163,31 @@ class Pose2dTest {
         @Test
         @DisplayName("rejects nulls")
         void rejectsNulls() {
-            assertThrows(IllegalArgumentException.class, () -> Pose2d.ORIGIN.transformBy(null));
-            assertThrows(IllegalArgumentException.class, () -> Pose2d.ORIGIN.minus(null));
-            assertThrows(
-                    IllegalArgumentException.class, () -> Pose2d.ORIGIN.interpolate(null, 0.5));
+            // The concatenation consumes the result: discarding a freshly created value
+            // trips the unused-return check, inside a lambda or a try block alike.
+            try {
+                fail("transformBy(null) must throw, got " + Pose2d.ORIGIN.transformBy(null));
+            } catch (IllegalArgumentException expected) {
+                assertEquals("transform must not be null", expected.getMessage());
+            }
+            try {
+                Pose2d.ORIGIN.minus(null);
+                fail("minus(null) must throw");
+            } catch (IllegalArgumentException expected) {
+                assertEquals("other must not be null", expected.getMessage());
+            }
+            try {
+                Pose2d.ORIGIN.interpolate(null, 0.5);
+                fail("interpolate(null, t) must throw");
+            } catch (IllegalArgumentException expected) {
+                assertEquals("end must not be null", expected.getMessage());
+            }
+            try {
+                Pose2d.ORIGIN.interpolate(Pose2d.ORIGIN, Double.NaN);
+                fail("interpolate(end, NaN) must throw");
+            } catch (IllegalArgumentException expected) {
+                assertEquals("t must not be NaN", expected.getMessage());
+            }
         }
     }
 }

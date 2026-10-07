@@ -5,6 +5,59 @@ All notable changes to CurioControl are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - Control
+
+The control and math toolkit: feedforward, motion profiles, pose geometry, and logging.
+
+### Added
+- **`math` geometry.** Immutable `Rotation2d`, `Vector2d`, `Pose2d`, and `Transform2d`,
+  plus `Units` conversions and the `MathUtil` clamp/lerp/angle-wrap helpers. Angles are
+  radians; distances are caller units, named explicitly. Pure Java, enforced by ArchUnit.
+- **`PIDFController`.** `kP·e + kI·∫e + kD·ė + kF·ff` over an internal `PIDController`, so
+  the feedback half keeps its anti-windup and limits. The feedforward reference is either
+  an explicit value or an attached `Feedforward` model evaluated against the motion state.
+  Output limits bind the combined output.
+- **`Feedforward` models.** `Constant` (stiction), `Velocity`, `Acceleration`, `Gravity`
+  (cosine of the arm angle from horizontal), and the combined `kS + kV·v + kA·a` drive
+  model. Stateless, allocation-free, unit-tested per model.
+- **`TrapezoidalMotionProfile`.** Accelerate/cruise/decelerate references with
+  `getPosition`/`getVelocity`/`getAcceleration`/`isFinished`, triangular degradation for
+  short moves, exact mirrored reverse moves, and validated `Constraints`.
+- **`HeadingSource`.** A one-method port for field-relative heading, implemented by `IMU`
+  and consumed by a new `MecanumDrive.fieldCentric(..., HeadingSource)` overload — so a
+  test drives heading changes with a lambda instead of a mocked SDK object.
+- **`IMU` calibration latch.** `isCalibrated()` starts false; a successful `calibrate` or
+  `requireCalibration` latches it, a failed calibration leaves it untouched.
+- **`telemetry.Logger`.** Opt-in CSV logging gated on `CurioConfig.LOGGING_ENABLED`
+  (off by default: one flag check, zero allocation when disabled). Registered columns in
+  registration order after an auto `time` column, RFC-4180 quoting for text, a bounded
+  ring buffer that drops-and-counts the oldest row when full, and a configurable flush
+  cadence. `Logger.toFile(...)` opens a timestamped file under a log directory.
+
+### Decisions
+- **Pose headings follow `MecanumDrive.fieldCentric`.** Heading 0 faces field-forward
+  (+y), positive headings rotate toward field-right (+x), so the forward axis at `h` is
+  `(sin h, cos h)` — and a body-frame translation rotates by *minus* the heading into
+  the field frame. The sign lives in `Pose2d`/`Transform2d`, proven against the
+  drivetrain's equations rather than trusting the ±π intuition.
+- **`wrapToPi(-π)` canonicalizes to `+π`.** One name for facing backwards, so opposite
+  constructions compare equal.
+
+### Testing
+- 459 unit tests (up from 377), no Robot Controller required — including a shared-gain
+  simulation proving PIDF converges where P-only control leaves steady-state error under
+  load, analytic three-phase profile tests, and CSV byte-exactness tests against the
+  spec's example format.
+- JaCoCo gate (70% on pure logic), Checkstyle, SpotBugs, Spotless, and `-Werror`
+  JavaDoc all green.
+
+### Documentation
+- Control-tuning guide: feedforward tuning order (`kS` → `kV` → `kA` → `kG`) with the
+  real `PIDFController` API.
+- New motion-profiles guide: trapezoid behaviour, loop wiring, limit selection.
+- Telemetry guide status updated; `Logger` JavaDoc covers the memory bound and the
+  buffering trade-off.
+
 ## [0.1.0] - Foundation
 
 First usable release: a mecanum robot that drives, and the layer everything else builds on.
@@ -105,5 +158,6 @@ First usable release: a mecanum robot that drives, and the layer everything else
 - Repository scaffolding docs: `README.md`, `CONTRIBUTING.md`, `LICENSE`
   (BSD 3-Clause), `MIGRATION.md`, `BRANCH_PROTECTION.md`, and a MkDocs site skeleton.
 
-[Unreleased]: https://github.com/curiooneftc/CurioControl/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/curiooneftc/CurioControl/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/curiooneftc/CurioControl/releases/tag/v0.2.0
 [0.1.0]: https://github.com/curiooneftc/CurioControl/releases/tag/v0.1.0
