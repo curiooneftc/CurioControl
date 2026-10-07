@@ -66,6 +66,33 @@ public final class MathUtil {
     }
 
     /**
+     * Applies a stick deadband with rescaling.
+     *
+     * <p>Inputs within the band read as zero, so a resting stick commands nothing; inputs outside
+     * it rescale to fill the full range, so full stick still means full power rather than
+     * full-minus-deadband. Without the rescale, teams compensate by pushing past the stick's
+     * physical end — which does not exist.
+     *
+     * @param value the stick input, typically in {@code [-1, 1]}
+     * @param deadband the half-width of the dead zone; must be in {@code [0, 1)}
+     * @return {@code 0} inside the band, otherwise the rescaled input
+     * @throws IllegalArgumentException if either argument is NaN, or the deadband is outside {@code
+     *     [0, 1)}
+     */
+    public static double applyDeadband(double value, double deadband) {
+        if (Double.isNaN(value) || Double.isNaN(deadband)) {
+            throw new IllegalArgumentException("arguments must not be NaN");
+        }
+        if (deadband < 0.0 || deadband >= 1.0) {
+            throw new IllegalArgumentException("deadband must be in [0, 1) but was " + deadband);
+        }
+        if (Math.abs(value) <= deadband) {
+            return 0.0;
+        }
+        return (value - Math.signum(value) * deadband) / (1.0 - deadband);
+    }
+
+    /**
      * Wraps an angle to {@code [-π, π]}.
      *
      * <p>Use for signed differences: the sign of the result says which way is shorter. Exactly −π

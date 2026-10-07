@@ -65,6 +65,36 @@ class MathUtilTest {
     }
 
     @Nested
+    @DisplayName("deadband")
+    class Deadband {
+
+        @Test
+        @DisplayName("zeroes inputs inside the band")
+        void zeroesInsideBand() {
+            assertEquals(0.0, MathUtil.applyDeadband(0.05, 0.1), DELTA);
+            assertEquals(0.0, MathUtil.applyDeadband(-0.1, 0.1), DELTA);
+            assertEquals(0.0, MathUtil.applyDeadband(0.0, 0.1), DELTA);
+        }
+
+        @Test
+        @DisplayName("rescales outside the band so full stick stays full power")
+        void rescalesOutsideBand() {
+            assertEquals(1.0, MathUtil.applyDeadband(1.0, 0.1), DELTA);
+            assertEquals(-1.0, MathUtil.applyDeadband(-1.0, 0.1), DELTA);
+            assertEquals(0.5, MathUtil.applyDeadband(0.55, 0.1), DELTA);
+        }
+
+        @Test
+        @DisplayName("rejects bad bands")
+        void rejectsBadBands() {
+            assertThrows(IllegalArgumentException.class, () -> MathUtil.applyDeadband(0.5, -0.1));
+            assertThrows(IllegalArgumentException.class, () -> MathUtil.applyDeadband(0.5, 1.0));
+            assertThrows(
+                    IllegalArgumentException.class, () -> MathUtil.applyDeadband(Double.NaN, 0.1));
+        }
+    }
+
+    @Nested
     @DisplayName("angle wrapping")
     class Wrapping {
 

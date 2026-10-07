@@ -110,6 +110,15 @@ class VisionManagerTest {
             assertEquals(VisionPortal.CameraState.STREAMING, manager.cameraState());
             assertEquals(30.0f, manager.getFps());
         }
+
+        @Test
+        @DisplayName("isStreaming reflects the camera state")
+        void isStreaming() {
+            assertTrue(manager.isStreaming());
+
+            backend.setCameraState(VisionPortal.CameraState.OPENING_CAMERA_DEVICE);
+            assertFalse(manager.isStreaming());
+        }
     }
 
     @Nested

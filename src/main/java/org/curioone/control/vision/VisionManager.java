@@ -256,6 +256,18 @@ public final class VisionManager {
     }
 
     /**
+     * Reports whether the camera is streaming.
+     *
+     * <p>The one-line wait-for-ready check: poll this after {@link #init()} instead of polling
+     * detections into the void while the camera is still opening.
+     *
+     * @return {@code true} when the camera state is streaming
+     */
+    public boolean isStreaming() {
+        return cameraState() == VisionPortal.CameraState.STREAMING;
+    }
+
+    /**
      * Returns the measured frame rate.
      *
      * @return frames per second, as reported by the SDK

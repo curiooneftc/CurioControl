@@ -68,6 +68,7 @@ nav:
       - Commands vs. states: guides/commands-vs-states.md
       - Bench testing: guides/bench-testing.md
       - Vision: guides/vision.md
+      - Odometry: guides/odometry.md
       - Robot config: guides/robot-config.md
       - Telemetry and logging: guides/telemetry-and-logging.md
   - Concepts:

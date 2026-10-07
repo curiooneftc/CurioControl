@@ -128,6 +128,24 @@ class LeafCommandTest {
         }
 
         @Test
+        @DisplayName("list overloads build the same compositions")
+        void listOverloads() {
+            final RecordingCommand first = new RecordingCommand("first");
+            final RecordingCommand second = new RecordingCommand("second");
+
+            final SequentialCommand sequence = Commands.sequence(List.of(first, second));
+            sequence.initialize();
+            sequence.execute();
+            assertEquals(List.of("init-first", "exec-first"), first.events());
+
+            final ParallelCommand parallel = Commands.parallel("Both", List.of(first, second));
+            assertEquals("Both", parallel.name());
+            assertThrows(IllegalArgumentException.class, () -> Commands.sequence(List.of()));
+            assertThrows(
+                    IllegalArgumentException.class, () -> Commands.sequence((List<Command>) null));
+        }
+
+        @Test
         @DisplayName("factories reject null actions and conditions")
         void rejectsNulls() {
             assertThrows(IllegalArgumentException.class, () -> Commands.instant(null));

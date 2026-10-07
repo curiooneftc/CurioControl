@@ -299,6 +299,25 @@ public final class Logger implements Closeable {
     }
 
     /**
+     * Reports whether logging is enabled.
+     *
+     * <p>Reads {@link CurioConfig#LOGGING_ENABLED} live. Use it to skip expensive value computation
+     * when logging is off — {@code record} itself is already free, but building the string to
+     * record is not:
+     *
+     * <pre>{@code
+     * if (log.isEnabled()) {
+     *     log.record("diagnostic", expensiveFormat());
+     * }
+     * }</pre>
+     *
+     * @return {@code true} when records will be written
+     */
+    public boolean isEnabled() {
+        return CurioConfig.LOGGING_ENABLED;
+    }
+
+    /**
      * Sets how many pending rows trigger a write to storage.
      *
      * @param rows the flush cadence; must be positive

@@ -5,6 +5,36 @@ All notable changes to CurioControl are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- **Wheel odometry.** Abstract `Odometry` (gyro-is-heading-authority fusion, first-order
+  loop integration, teleport-safe reset) with `MecanumOdometry` (inverse wheel equations,
+  matching the drivetrain's forward math) and `TankOdometry`. Poses in inches, start pose
+  at construction, scratch buffers instead of per-loop allocation.
+- **`PoseController`.** Proportional go-to-pose in `drive`: field error rotated into the
+  robot frame, saturated `DriveSignal`, arrival window — with the heading/rotation sign
+  inversion handled once inside instead of debated at every call site.
+- **`Commands.run`.** A never-finishing per-loop action: the missing shape for TeleOp
+  defaults that previously needed a hand-written class.
+- **`Commands.sequence/parallel` list overloads** for programmatically built routines.
+- **`MathUtil.applyDeadband`** with rescaling, so full stick stays full power.
+- **`EdgeDetector` / `Debouncer`** (in `util`): single-poll edge reporting and
+  stable-for-duration settling, Clock-injected like every other time-dependent class.
+- **`Logger.record` overloads** for `int`/`long`/`boolean`, **`Logger.isEnabled()`**
+  for skipping expensive formatting, **`TelemetryManager.add` for booleans**,
+  **`Motor.stop()` / `ContinuousServo.stop()`**, **`VisionManager.isStreaming()`**.
+
+### Verification
+- Full audit of the handy APIs (`Motor`, `CurioRobot` accessors, wrappers, `DriveBase`):
+  complete except the gaps closed above; no TODOs or dead code found.
+- Pinned two behaviors tests caught in passing: a NaN tag range can never win
+  closest-tag selection, and int log values format exactly (`2`, not `2.0`).
+
+### Documentation
+- New odometry guide: tracking, go-to-pose wiring, and the floor-and-tape validation
+  checklist.
+
 ## [0.4.0] - Vision
 
 Optional, opt-in vision: nothing is built until `robot.vision()` is called.

@@ -124,6 +124,20 @@ public final class TelemetryManager {
     }
 
     /**
+     * Buffers a true/false value with no category prefix.
+     *
+     * <p>Sensor states, beam breaks, and "at target" flags read far better as {@code true} than as
+     * {@code 1.0}.
+     *
+     * @param key a constant, allocation-free label
+     * @param value the value to report
+     * @return this manager, for chaining
+     */
+    public TelemetryManager add(String key, boolean value) {
+        return store(null, key, value);
+    }
+
+    /**
      * Buffers a numeric value in a category.
      *
      * <p>A {@link TelemetryCategory#DEBUG} value is discarded unless {@code CurioConfig.DEBUG} is
@@ -159,6 +173,18 @@ public final class TelemetryManager {
      * @return this manager, for chaining
      */
     public TelemetryManager add(TelemetryCategory category, String key, String value) {
+        return store(category, key, value);
+    }
+
+    /**
+     * Buffers a true/false value in a category.
+     *
+     * @param category the category, or {@code null} for no category prefix
+     * @param key a constant, allocation-free label
+     * @param value the value to report
+     * @return this manager, for chaining
+     */
+    public TelemetryManager add(TelemetryCategory category, String key, boolean value) {
         return store(category, key, value);
     }
 

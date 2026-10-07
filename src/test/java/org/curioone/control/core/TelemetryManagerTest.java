@@ -123,6 +123,15 @@ class TelemetryManagerTest {
         }
 
         @Test
+        @DisplayName("reports booleans as true and false, not 1.0 and 0.0")
+        void reportsBooleans() {
+            telemetry.add("tripped", true).add("holding", false).updateNow();
+
+            assertEquals(true, sink.valueAt(0));
+            assertEquals(false, sink.valueAt(1));
+        }
+
+        @Test
         @DisplayName("grows past its initial capacity without losing values")
         void growsBeyondInitialCapacity() {
             for (int i = 0; i < 100; i++) {

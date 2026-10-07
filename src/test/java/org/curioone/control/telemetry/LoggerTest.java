@@ -1,6 +1,7 @@
 package org.curioone.control.telemetry;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -59,6 +60,16 @@ class LoggerTest {
             log.update();
 
             assertEquals("", out.toString());
+        }
+
+        @Test
+        @DisplayName("isEnabled reflects the flag")
+        void isEnabledReflectsFlag() {
+            final Logger log = logger();
+
+            assertTrue(log.isEnabled());
+            CurioConfig.LOGGING_ENABLED = false;
+            assertFalse(log.isEnabled());
         }
     }
 

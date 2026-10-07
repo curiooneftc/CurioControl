@@ -194,6 +194,34 @@ public final class Commands {
     }
 
     /**
+     * Creates a sequence from a built list.
+     *
+     * <p>For routines assembled programmatically — conditionally added steps, generated gear ratios
+     * of repetition — where varargs would mean a manual {@code toArray} at every call site.
+     *
+     * @param commands the children in run order
+     * @return the command
+     * @throws IllegalArgumentException if {@code commands} is {@code null} or empty, or holds a
+     *     {@code null}
+     */
+    public static SequentialCommand sequence(List<Command> commands) {
+        return new SequentialCommand(toArray(commands));
+    }
+
+    /**
+     * Creates a named sequence from a built list.
+     *
+     * @param name the name for telemetry and diagnostics; must not be blank
+     * @param commands the children in run order
+     * @return the command
+     * @throws IllegalArgumentException if {@code name} is {@code null} or blank, {@code commands}
+     *     is {@code null} or empty, or holds a {@code null}
+     */
+    public static SequentialCommand sequence(String name, List<Command> commands) {
+        return new SequentialCommand(name, toArray(commands));
+    }
+
+    /**
      * Creates a parallel group with a default name.
      *
      * @param commands the children
@@ -216,6 +244,45 @@ public final class Commands {
      */
     public static ParallelCommand parallel(String name, Command... commands) {
         return new ParallelCommand(name, commands);
+    }
+
+    /**
+     * Creates a parallel group from a built list.
+     *
+     * @param commands the children
+     * @return the command
+     * @throws IllegalArgumentException if {@code commands} is {@code null} or empty, or holds a
+     *     {@code null}
+     */
+    public static ParallelCommand parallel(List<Command> commands) {
+        return new ParallelCommand(toArray(commands));
+    }
+
+    /**
+     * Creates a named parallel group from a built list.
+     *
+     * @param name the name for telemetry and diagnostics; must not be blank
+     * @param commands the children
+     * @return the command
+     * @throws IllegalArgumentException if {@code name} is {@code null} or blank, {@code commands}
+     *     is {@code null} or empty, or holds a {@code null}
+     */
+    public static ParallelCommand parallel(String name, List<Command> commands) {
+        return new ParallelCommand(name, toArray(commands));
+    }
+
+    /**
+     * Converts a built list for the varargs constructors, validating as it goes.
+     *
+     * @param commands the children
+     * @return the children as an array
+     * @throws IllegalArgumentException if {@code commands} is {@code null}
+     */
+    static Command[] toArray(List<Command> commands) {
+        if (commands == null) {
+            throw new IllegalArgumentException("commands must not be null");
+        }
+        return commands.toArray(new Command[0]);
     }
 
     /**
