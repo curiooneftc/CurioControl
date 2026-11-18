@@ -61,6 +61,31 @@ immediately rather than as a confusing compile error.
 `androidx.annotation` is resolved normally rather than through the unpacking configuration — it is
 a multiplatform library, not an AAR.
 
+## Cross-version compatibility
+
+The pinned version is the **oldest supported** SDK, not the newest: **11.1.0**, the version a stock
+`FtcRobotController` fork uses. Compiling against the baseline lets one artifact link on both 11.1
+and 12.x — compiling against 12.0.0 would emit references to classes that do not exist on an 11.1
+Robot Controller.
+
+Two details make the artifact consumable by a stock Java 8 project:
+
+- **Java 8 bytecode.** `compileJava` sets `options.release = 8`; the build itself still runs on
+  JDK 17. Any Java 9+ API or language feature in `src/main` fails compilation, so the jar cannot
+  drift into requiring a language level a stock fork does not use. Gradle module metadata
+  advertises `org.gradle.jvm.version: 8`.
+- **Reflective AprilTag id.** SDK 11 declares `id` on `AprilTagDetection`; SDK 12 moves it to
+  `AprilTagSingleDetection` and adds `AprilTagClusterDetection`, which has no id. Reading the field
+  reflectively keeps the artifact loadable on both. Clusters return empty and are skipped; they
+  never trigger a `NoSuchFieldError` on older runtimes.
+
+`record` value types were replaced by plain final classes with the same accessors, and Java 9
+collection factories by Java 8 equivalents, so consumer code written against either shape compiles.
+
+Verified by building the stock v11.1 fork (Gradle 8.9, AGP 8.7.0, compileSdk 30, Java 8) with
+SDK 11.1.0 and again with 12.0.0; both APKs dex all 82 CurioControl classes. See
+[`docs/reference/compatibility.md`](../reference/compatibility.md).
+
 ## Consequences
 
 - The published CurioControl artifact contains **no** SDK classes. Consumers get them from the

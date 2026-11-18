@@ -1,15 +1,21 @@
 [versions]
 # --- Toolchain ---
+# Build JDK (runs Gradle, compiles, runs tests). The published library targets Java 8
+# bytecode (see build.gradle.kts) so stock Robot Controller projects — Java 8,
+# compileSdk 30 — consume it with no Gradle upgrades.
 java = "17"
 # --- FTC SDK (compileOnly: provided by the Robot Controller app at runtime) ---
-ftcSdk = "12.0.0"
+# Baseline is the stock fork's SDK: compiling against the oldest supported SDK keeps the
+# artifact link-compatible with both 11.1 and 12.x (AprilTag id is read reflectively for
+# the 12.0 Single/Cluster split; see AprilTagManager#tagIdOf).
+ftcSdk = "11.1.0"
 androidxAnnotation = "1.9.1"
 # The SDK's SerialNumber class carries a Gson annotation. Without gson on the compile classpath
 # javac emits a classfile-lint warning that -Werror turns into a build failure. Declaring the
 # real dependency is better than suppressing the lint category, which would hide genuine classpath
 # gaps. compileOnly: the Robot Controller provides it at runtime.
 gson = "2.14.0"
-# EasyOpenCV carries org.opencv.core.Point, which appears in AprilTagSingleDetection's
+# EasyOpenCV carries org.opencv.core.Point, which appears in AprilTagDetection's
 # constructor. Tests build detections through that constructor (passing nulls for the untouched
 # image fields), so javac needs the class even though no benchmark or test ever touches pixels.
 easyopencv = "1.7.3"

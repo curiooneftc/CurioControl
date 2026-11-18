@@ -6,7 +6,7 @@
 
 [![Status](https://img.shields.io/badge/status-pre--release-orange)](https://github.com/curiooneftc/CurioControl)
 [![License](https://img.shields.io/badge/license-BSD--3--Clause-blue)](LICENSE)
-[![Java](https://img.shields.io/badge/java-17-orange)](https://adoptium.net/)
+[![Java](https://img.shields.io/badge/java-8%20bytecode-orange)](https://adoptium.net/)
 
 </div>
 
@@ -52,29 +52,41 @@ infrastructure required to make a motor turn.
 
 ## 60-second quickstart
 
-The framework ships as a normal Maven artifact. Add it to your robot project's
-`build.gradle.kts`:
+The framework ships as a normal Maven artifact. In a stock FTC project, **the only change is in
+`TeamCode/build.gradle`**: declare JitPack, then depend on the exact release tag. No GitHub token or
+other credentials are needed:
 
-```kotlin
+```groovy
 repositories {
-    mavenCentral()
-    google()
-    maven {
-        url = uri("https://maven.pkg.github.com/curiooneftc/CurioControl")
-        // Read-only token, supplied via a Gradle property or environment variable.
-        // Never committed — see docs/RELEASE_STRATEGY.md section 9.
-        credentials {
-            username = providers.gradleProperty("github.actor").orNull
-            password = providers.gradleProperty("github.token").orNull
-        }
-    }
+    maven { url 'https://jitpack.io' }
 }
 
 dependencies {
-    // Pin an exact version. Competition code must be reproducible.
-    implementation("org.curioone:curiocontrol:0.1.0")
+    implementation project(':FtcRobotController')
+    // Pin an exact release tag. Competition code must be reproducible.
+    implementation 'com.github.curiooneftc:CurioControl:v0.5.0'
 }
 ```
+
+No Gradle, AGP, `compileSdk`, or Java upgrade is needed. CurioControl ships **Java 8 bytecode**
+compiled against FTC SDK **11.1**, so a stock `FtcRobotController` fork consumes it as-is. The stock
+template allows module-level repositories; if a custom project uses `FAIL_ON_PROJECT_REPOS`, move
+the JitPack line into `settings.gradle.kts` instead.
+
+For a Kotlin DSL module:
+
+```kotlin
+repositories {
+    maven { url = uri("https://jitpack.io") }
+}
+
+dependencies {
+    implementation("com.github.curiooneftc:CurioControl:v0.5.0")
+}
+```
+
+The same artifact is verified on SDK 11.1.0 and 12.0.0; see the
+[compatibility reference](docs/reference/compatibility.md).
 
 Then a TeleOp looks like this:
 
@@ -182,8 +194,9 @@ cd CurioControl
 
 ## Building from source
 
-**Prerequisites:** a JDK. The build targets Java 17 and downloads it automatically if your machine
-does not have it, so nothing to install beyond Git.
+**Prerequisites:** a JDK. The build runs on Java 17 and downloads it automatically if your machine
+does not have it, so nothing to install beyond Git. The **published artifact is Java 8 bytecode**,
+which is what lets a stock FTC project consume it without a toolchain upgrade.
 
 ```bash
 ./gradlew build                 # compile, test, Checkstyle, SpotBugs, Javadoc
@@ -200,19 +213,22 @@ vendored `.aar` files, no Robot Controller installation required.
 
 | Component | Version |
 |---|---|
-| CurioControl | 0.1.0-SNAPSHOT |
-| FTC SDK | 12.0.0 |
-| Java | 17 |
-| Gradle | 8.14.5 |
+| CurioControl | 0.5.0 |
+| FTC SDK (compile baseline) | 11.1.0 |
+| FTC SDK (verified) | 11.1.0 and 12.0.0 |
+| Library bytecode | Java 8 (class file major version 52) |
+| Build JDK | 17 |
+| Build Gradle | 8.14.5 |
+| Consumer toolchain | any stock fork the above supports (verified Gradle 8.9 / AGP 8.7.0 / compileSdk 30) |
 
 ---
 
 ## Security
 
 The **library** makes **no network calls at runtime** and transmits **no robot data** externally.
-It never requires connectivity while the robot is operating. Credentials for GitHub Packages are
-supplied through Gradle properties or environment variables and are never committed. See
-[`spec.md` §44](spec.md).
+It never requires connectivity while the robot is operating. Teams resolve released artifacts from
+JitPack without credentials; maintainers publish to GitHub Packages with a scoped Actions token
+that is never committed. See [`spec.md` §44](spec.md).
 
 The **build** is a separate matter, and the distinction is worth being precise about. A Gradle
 Build Scan is uploaded to the public Develocity server when a build *fails* — no account, no key,

@@ -7,7 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+No changes yet.
+
+## [0.5.0] - 2026-11-18
+
+A stock-FTC-ready release: credential-free distribution, a drop-in example robot, and the
+remaining lifecycle/timing building blocks.
+
 ### Added
+- **`CurioAuto`.** A command-based `LinearOpMode` base that owns a private scheduler, calls
+  `configureRobot()` then `buildRoutine()` from a final `initRobot()`, runs one scheduler pass per
+  `runRobot()` loop, and cancels outstanding commands on `stop()`.
+- **`CommandScheduler.close()`.** Immediate shutdown cancellation; the scheduler stays reusable
+  after close so a restarted OpMode does not need a new instance.
+- **`Timer` and `RateLimiter`.** Clock-injected loop timing and rate gating in `util`, with tests
+  that do not depend on wall-clock time.
+- **Example TeamCode module.** `examples/robot/` is a complete drop-in module for stock FTC SDK
+  11.1 and 12.0 projects. Its `TeamCode/build.gradle` declares the repository and the dependency;
+  no root-project or toolchain change is needed.
+- **Public API snapshot test.** Normalized public/protected signatures are checked against
+  `src/test/resources/api/public-api.txt` so accidental API changes fail CI. Regenerate with
+  `CURIO_API_UPDATE=true`.
+- **Javadoc gate.** `./gradlew javadoc` runs `-Xdoclint:all -Werror`; every public declaration
+  must be documented before a release can build.
+- **Credential-free public distribution.** Released tags are available from JitPack; a stock FTC
+  project only needs a `repositories` line and a pinned dependency in `TeamCode/build.gradle`. No
+  GitHub token, PAT, or root-project edit is required.
 - **Wheel odometry.** Abstract `Odometry` (gyro-is-heading-authority fusion, first-order
   loop integration, teleport-safe reset) with `MecanumOdometry` (inverse wheel equations,
   matching the drivetrain's forward math) and `TankOdometry`. Poses in inches, start pose
@@ -25,7 +50,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   for skipping expensive formatting, **`TelemetryManager.add` for booleans**,
   **`Motor.stop()` / `ContinuousServo.stop()`**, **`VisionManager.isStreaming()`**.
 
+### Compatibility
+- **Drop-in on a stock `FtcRobotController` fork.** The published library is now Java 8
+  bytecode compiled against FTC SDK 11.1.0, so a stock v11.1 project (Gradle 8.9,
+  AGP 8.7.0, compileSdk 30, `sourceCompatibility 1.8`) consumes it by adding one
+  dependency line — no Gradle, AGP, compileSdk, or Java upgrade. Verified end-to-end by
+  building the stock fork's APK against SDK 11.1.0 and 12.0.0; both dex the full set of
+  CurioControl classes (82).
+- `record` value types (`PoseController.DriveSignal`, `TrapezoidalMotionProfile.State`)
+  are now plain final classes with the same accessors, and Java 9 collection factories
+  were replaced with Java 8 equivalents. Caller code is unchanged.
+- `AprilTagManager` reads a detection's tag id reflectively: SDK 11 declares `id` on
+  `AprilTagDetection`, SDK 12 moves it to `AprilTagSingleDetection`, and cluster
+  detections carry none. One artifact runs on both; 12.x clusters are skipped rather
+  than failing linkage. `--release 8` is enforced in the build, so a Java 9+ API in
+  `src/main` fails compilation instead of shipping a jar the stock app cannot load.
+
 ### Verification
+- Built `:TeamCode:assembleDebug` in untouched stock `FtcRobotController` v11.1 and v12.0
+  checkouts using only the example `TeamCode/build.gradle` repository/dependency block and a
+  locally published JitPack-coordinate artifact. No token, root-project edit, toolchain bump, or
+  SDK source change was needed.
+- Public API snapshot, Javadoc (`-Xdoclint:all -Werror`), Checkstyle, SpotBugs, Spotless, and the
+  full Gradle build are green.
 - Full audit of the handy APIs (`Motor`, `CurioRobot` accessors, wrappers, `DriveBase`):
   complete except the gaps closed above; no TODOs or dead code found.
 - Pinned two behaviors tests caught in passing: a NaN tag range can never win
@@ -34,6 +81,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Documentation
 - New odometry guide: tracking, go-to-pose wiring, and the floor-and-tape validation
   checklist.
+- Installation, project setup, migration, release strategy, ADR-008, and the new troubleshooting
+  guide now document the credential-free JitPack path and the TeamCode-only edit.
 
 ## [0.4.0] - Vision
 
@@ -259,31 +308,8 @@ First usable release: a mecanum robot that drives, and the layer everything else
 - Quickstart, drivetrain guide, and hardware-abstraction guide updated to the real API.
 - ADR-014: `CurioRobot` as composition root, and hardware behind a port.
 
-## [Unreleased]
-
-### Added
-- Gradle build with a version catalog, Java 17 toolchain (auto-provisioned), and
-  configuration cache.
-- FTC SDK `12.0.0` wired as a compile-only dependency, resolved from Maven Central
-  (ADR-001). The published artifact contains no SDK classes; the Robot Controller
-  provides them at runtime.
-- Static analysis: Checkstyle, SpotBugs, and Spotless (google-java-format AOSP
-  style), all enforced by `./gradlew build`.
-- Test infrastructure: JUnit 5, Mockito, ArchUnit, and JaCoCo.
-- Architecture guard tests for the pure-Java boundary of `math`, `control`, and
-  `util`, and for the package layering in `docs/PROJECT_STRUCTURE.md` (ADR-003,
-  ADR-010).
-- `CurioConfig` with framework-wide flags and a build-derived version constant.
-- Base package layout `org.curioone.control.*` with a `package-info.java` per package.
-- Develocity Build Scan publishing on build failure, with no account or API key
-  required. Terms-of-service acceptance is declared in `settings.gradle.kts` and
-  therefore applies to every contributor.
-- GitHub Actions: `build.yml`, `release.yml` (dry-run publish until enabled),
-  `docs.yml`, `perf.yml`, and Dependabot.
-- Repository scaffolding docs: `README.md`, `CONTRIBUTING.md`, `LICENSE`
-  (BSD 3-Clause), `MIGRATION.md`, `BRANCH_PROTECTION.md`, and a MkDocs site skeleton.
-
-[Unreleased]: https://github.com/curiooneftc/CurioControl/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/curiooneftc/CurioControl/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/curiooneftc/CurioControl/releases/tag/v0.5.0
 [0.4.0]: https://github.com/curiooneftc/CurioControl/releases/tag/v0.4.0
 [0.3.0]: https://github.com/curiooneftc/CurioControl/releases/tag/v0.3.0
 [0.2.0]: https://github.com/curiooneftc/CurioControl/releases/tag/v0.2.0

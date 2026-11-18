@@ -1,0 +1,45 @@
+name: Stock-Fork Compatibility
+
+# Builds the example TeamCode module in untouched stock FTC SDK forks. The CurioControl artifact
+# is published locally with JitPack coordinates first, so this job verifies the exact dependency
+# declaration teams use without waiting for a remote JitPack build or needing any credentials.
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  verify-sdk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        sdk: [v11.1, v12.0]
+
+    steps:
+      - name: Checkout CurioControl
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android platform
+        run: sdkmanager "platforms;android-30" "build-tools;30.0.3"
+
+      - name: Publish artifact with JitPack coordinates locally
+        run: |
+          VERSION="$(sed -n 's/^version = "\([^"]*\)"/\1/p' build.gradle.kts | head -n 1)"
+          JITPACK=true VERSION="v${VERSION}" ./gradlew --no-daemon publishToMavenLocal
+
+      - name: Build example TeamCode on FTC SDK ${{ matrix.sdk }}
+        run: bash scripts/stockfork-compat.sh "${{ matrix.sdk }}"

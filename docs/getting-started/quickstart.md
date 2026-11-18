@@ -1,7 +1,7 @@
 # Quickstart
 
-The goal: a mecanum robot that drives, in about ten minutes. Everything on this page exists in
-`0.1.0`.
+The goal: a mecanum robot that drives, in about ten minutes. Everything on this page works on a
+stock `FtcRobotController` fork with the CurioControl dependency added — no Gradle or Java upgrade.
 
 ## Before you start
 

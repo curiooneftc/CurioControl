@@ -22,7 +22,7 @@
 | [005](docs/adr/005-hardware-abstraction.md) | Wrapper (not interface) hardware abstraction | **Accepted** (resolved in Phase 0) |
 | [006](docs/adr/006-telemetry-api.md) | Telemetry: fluent `add(...).update()` API | Accepted |
 | [007](docs/adr/007-logging-defaults.md) | Logging disabled by default, CSV to RC storage | Accepted |
-| [008](docs/adr/008-publishing-target.md) | Publishing to GitHub Packages first | Accepted |
+| [008](docs/adr/008-publishing-target.md) | Publishing target | Accepted; amended for credential-free public reads |
 | [009](docs/adr/009-time-injection.md) | Time injection via a `Clock` interface | Accepted |
 | [010](docs/adr/010-architecture-tests.md) | Architecture rules enforced by tests (ArchUnit) | Accepted |
 | [011](docs/adr/011-vision-is-optional.md) | Vision is lazy and optional | Accepted |
@@ -88,7 +88,10 @@ place.
 task fails the build if an AAR has no `classes.jar`, so a change in how the SDK is published
 surfaces immediately rather than as a confusing compile error.
 
-Pinned SDK version: **12.0.0**, in `gradle/libs.versions.toml`.
+Pinned SDK version: **11.1.0** (the stock fork's baseline), in `gradle/libs.versions.toml`.
+Compiling against the oldest supported SDK keeps one artifact link-compatible with both 11.1 and
+12.x; the library is emitted as Java 8 bytecode so a stock consumer needs no Gradle or Java upgrade.
+See [the full ADR](docs/adr/001-ftc-sdk-dependency-strategy.md) for the cross-version details.
 
 **Consequences**
 - The published CurioControl artifact contains **no** SDK classes; consumers get them from the
@@ -252,28 +255,27 @@ Full text: [`docs/adr/007-logging-defaults.md`](docs/adr/007-logging-defaults.md
 
 ---
 
-## ADR-008: Publishing to GitHub Packages first
+## ADR-008: Publishing target
 
-**Status:** Accepted (source: `spec.md` §34)
+**Status:** Accepted; amended for credential-free public reads (source: `spec.md` §34)
 
 Full text: [`docs/adr/008-publishing-target.md`](docs/adr/008-publishing-target.md)
 
 **Decision**
-Distribute via **GitHub Packages** (`org.curioone:curiocontrol`). Consider **Maven Central**
+Maintainers publish through GitHub Packages; public consumers use JitPack
+(`com.github.curiooneftc:CurioControl:<tag>`), which needs no credentials. Consider Maven Central
 later, post-v1.0.0.
 
 **Rationale**
-- Free and native to the repo, with Actions-based publishing using the ephemeral `GITHUB_TOKEN`.
-- No separate credentials infrastructure for the initial releases.
+- GitHub Packages is free and native to the repo, with Actions-based publishing using the ephemeral
+  `GITHUB_TOKEN`.
+- JitPack builds tagged public source, so FTC teams do not need a PAT just to add the library.
 - Maven Central adds signing, a Sonatype account, and slower cadence — not worth it pre-stability.
 
 **Consequences**
-- Public read access for the package must be configured in repo settings; otherwise consumers need
-  a **read-only** token.
-- Consumers add a `maven { url = uri("https://maven.pkg.github.com/curiooneftc/CurioControl") }`
-  repository.
-- All released versions remain resolvable (GitHub Packages keeps them), satisfying reproducibility
-  (`spec.md` §36).
+- Consumers add `maven { url = uri("https://jitpack.io") }` with no `credentials` block.
+- Releases are pinned by exact tag, preserving reproducibility (`spec.md` §36).
+- GitHub Packages remains a maintainer-side publishing detail, not the documented consumer source.
 
 ---
 

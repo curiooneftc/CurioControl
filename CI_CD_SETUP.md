@@ -24,6 +24,8 @@ Tag vX.Y.Z on main
     │
     ▼
 release.yml ──► clean verify → publish (jar, sources, javadoc) to GitHub Packages → GitHub Release
+                     │
+                     └─ same v* tag is the JitPack version (no consumer credentials)
 
 main / schedule
     │
@@ -82,7 +84,9 @@ which is the Phase 0 dry run required by task 0.8.
 A release build runs `./gradlew clean build` rather than an incremental build, deliberately not
 trusting the cache. It then publishes the jar, sources jar, javadoc jar, `.module`, and `.pom` to
 GitHub Packages using the ephemeral `GITHUB_TOKEN`, and creates a GitHub Release.
-Publishing uses `GITHUB_TOKEN`, never a stored PAT (`spec.md` §44).
+Publishing uses `GITHUB_TOKEN`, never a stored PAT (`spec.md` §44). The same `v*` tag is consumed by
+JitPack on first request, so teams add only a repository line and a pinned dependency in
+`TeamCode/build.gradle`; they never need credentials.
 
 ### 2.3 `perf.yml` — scheduled benchmarks
 
@@ -369,30 +373,9 @@ One command, and it is the single definition of "green":
 | `javadoc` | Documentation builds cleanly, `-Werror` |
 | `jar`, `sourcesJar`, `javadocJar` | The publishable artifacts |
 
-`jacocoTestCoverageVerification` is **disabled in Phase 0**: there is no production code to cover
-yet. It is enabled with the per-package targets in
-[`TESTING_STRATEGY.md` §4](./TESTING_STRATEGY.md) starting at v0.1.0.
-
-publishing {
-    publications {
-        create<MavenPublication>("maven") {
-            from(components["java"])
-            artifactId = "curiocontrol"
-            pom { name = "CurioControl"; description = "..." }
-        }
-    }
-    repositories {
-        maven {
-            name = "GitHubPackages"
-            url = uri("https://maven.pkg.github.com/curiooneftc/CurioControl")
-            credentials {
-                username = "GITHUB_ACTOR"
-                password = "GITHUB_TOKEN"
-            }
-        }
-    }
-}
-```
+JaCoCo reporting and `jacocoTestCoverageVerification` are configured for the pure-logic packages;
+the current thresholds are documented in [`TESTING_STRATEGY.md` §4](./TESTING_STRATEGY.md).
+Run `./gradlew jacocoTestCoverageVerification` explicitly until the gate is wired into `check`.
 
 > The FTC SDK dependency wiring was the highest-risk build detail. It is resolved in Phase 0 and
 > recorded in [ADR-001](./docs/adr/001-ftc-sdk-dependency-strategy.md).

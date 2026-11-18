@@ -53,17 +53,89 @@ class CurioOpModeTest {
     class Auto {
 
         @Test
-        @DisplayName("adds no behaviour of its own")
-        void addsNothing() {
-            // getDeclaredMethods() includes the compiler-generated synthetic constructor, so
-            // exclude it rather than asserting a raw count.
-            final long nonSynthetic =
-                    java.util.Arrays.stream(CurioAuto.class.getDeclaredMethods())
-                            .filter(m -> !m.isSynthetic())
-                            .count();
+        @DisplayName("configures the robot before building the routine")
+        void configuresThenBuilds() {
+            final java.util.List<String> calls = new java.util.ArrayList<>();
+            final org.curioone.control.support.RecordingCommand routine =
+                    new org.curioone.control.support.RecordingCommand("routine", () -> true);
 
-            assertEquals(0, nonSynthetic, "CurioAuto must declare no methods of its own");
-            assertEquals(0, CurioAuto.class.getDeclaredFields().length);
+            final class TestAuto extends CurioAuto {
+                @Override
+                protected void configureRobot() {
+                    calls.add("configure");
+                }
+
+                @Override
+                protected void buildRoutine() {
+                    calls.add("build");
+                    schedule(routine);
+                }
+            }
+
+            final TestAuto auto = new TestAuto();
+            auto.initRobot();
+
+            assertEquals(java.util.List.of("configure", "build"), calls);
+            assertFalse(
+                    auto.scheduler().isScheduled(routine),
+                    "scheduling is staged, so nothing may start before the first loop");
+        }
+
+        @Test
+        @DisplayName("runs the scheduled routine on every loop")
+        void runsTheRoutine() {
+            final org.curioone.control.support.RecordingCommand routine =
+                    new org.curioone.control.support.RecordingCommand("routine", () -> true);
+
+            final class TestAuto extends CurioAuto {
+                @Override
+                protected void buildRoutine() {
+                    schedule(routine);
+                }
+            }
+
+            final TestAuto auto = new TestAuto();
+            auto.initRobot();
+            auto.runRobot();
+
+            assertEquals(
+                    java.util.List.of("init-routine", "exec-routine", "end-routine:false"),
+                    routine.events());
+            assertFalse(auto.scheduler().isScheduled(routine));
+        }
+
+        @Test
+        @DisplayName("ends running commands as interrupted when the OpMode stops")
+        void stopEndsTheRoutine() {
+            final org.curioone.control.support.RecordingCommand routine =
+                    new org.curioone.control.support.RecordingCommand("routine");
+
+            final class TestAuto extends CurioAuto {
+                @Override
+                protected void buildRoutine() {
+                    schedule(routine);
+                }
+            }
+
+            final TestAuto auto = new TestAuto();
+            auto.initRobot();
+            auto.runRobot();
+            assertTrue(auto.scheduler().isScheduled(routine));
+
+            auto.stop();
+
+            assertTrue(routine.events().contains("end-routine:true"));
+            assertFalse(auto.scheduler().isScheduled(routine));
+        }
+
+        @Test
+        @DisplayName("keeps the lifecycle final, so a subclass cannot skip the scheduler")
+        void lifecycleStaysFinal() throws ReflectiveOperationException {
+            assertTrue(Modifier.isFinal(CurioAuto.class.getMethod("initRobot").getModifiers()));
+            assertTrue(Modifier.isFinal(CurioAuto.class.getMethod("runRobot").getModifiers()));
+            assertFalse(
+                    Modifier.isFinal(CurioAuto.class.getMethod("stop").getModifiers()),
+                    "stop must stay overridable for extra cleanup");
         }
 
         @Test
@@ -73,14 +145,12 @@ class CurioOpModeTest {
         }
 
         @Test
-        @DisplayName("inherits the final lifecycle methods rather than redeclaring them")
+        @DisplayName("inherits the final init and loop rather than redeclaring them")
         void inheritsFinalLifecycle() throws ReflectiveOperationException {
-            // getMethod returns a fresh copy per call, so compare the declaring class instead:
-            // a redeclared init would still be final but would be CurioAuto's, not CurioOpMode's.
             assertEquals(
                     CurioOpMode.class,
                     CurioAuto.class.getMethod("init").getDeclaringClass(),
-                    "CurioAuto must not redeclare init; the point is that it adds nothing");
+                    "CurioAuto must not redeclare init");
             assertEquals(
                     CurioOpMode.class,
                     CurioAuto.class.getMethod("loop").getDeclaringClass(),

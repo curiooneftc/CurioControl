@@ -1,5 +1,6 @@
 package org.curioone.control.command;
 
+import java.util.Collections;
 import java.util.Set;
 import org.curioone.control.core.Subsystem;
 
@@ -93,7 +94,7 @@ public interface Command {
      * @return the required subsystems, never {@code null}
      */
     default Set<Subsystem> requirements() {
-        return Set.of();
+        return Collections.emptySet();
     }
 
     /**

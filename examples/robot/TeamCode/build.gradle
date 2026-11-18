@@ -1,0 +1,39 @@
+//
+// TeamCode/build.gradle
+//
+// The example is a TeamCode module for a stock FTC project. Copy this directory into a fresh
+// FTC SDK checkout (11.1 or 12.0) in place of the stock TeamCode module, or copy the Java sources
+// and this file into your own TeamCode module.
+//
+// Nothing about the FTC build changes: same Gradle, same AGP, same compileSdk, same Java 8. The
+// repository and dependency below are the only CurioControl-specific declarations.
+//
+
+// SDK 12 moved this declaration out of build.common.gradle; applying it twice on SDK 11 is a no-op.
+apply plugin: 'com.android.application'
+
+apply from: '../build.common.gradle'
+apply from: '../build.dependencies.gradle'
+
+android {
+    namespace = 'org.curioone.robot'
+
+    packagingOptions {
+        jniLibs.useLegacyPackaging true
+    }
+}
+
+repositories {
+    // The only CurioControl-specific repository. Stock FTC projects allow module repositories,
+    // so this file is the only place a team has to edit. No token is needed.
+    maven { url 'https://jitpack.io' }
+}
+
+dependencies {
+    implementation project(':FtcRobotController')
+
+    // Pin an exact JitPack release tag. Competition code must be reproducible.
+    // JitPack is declared in this module's repositories above; no token is needed.
+    // Use the release you deploy; this example needs the CurioAuto API (0.5.0 or later).
+    implementation 'com.github.curiooneftc:CurioControl:v0.5.0'
+}

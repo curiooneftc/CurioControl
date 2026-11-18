@@ -11,7 +11,6 @@ import org.curioone.control.math.Units;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagPoseFtc;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
-import org.firstinspires.ftc.vision.apriltag.AprilTagSingleDetection;
 
 /**
  * A validated view onto one FTC AprilTag processor.
@@ -94,17 +93,23 @@ public final class AprilTagManager {
     /**
      * Finds the detection for one tag id.
      *
-     * <p>Only single-tag detections carry an id; cluster detections report a virtual point with no
-     * single tag behind it and never match. Unknown tags — visible but absent from the processor's
-     * library — report no pose, but they still match by id: presence and pose are separate
-     * questions, answered by {@code getTag} and {@code getRobotPose} respectively.
+     * <p>Only single-tag detections carry an id; cluster detections (SDK 12+) report a virtual
+     * point with no single tag behind it and never match. Unknown tags — visible but absent from
+     * the processor's library — report no pose, but they still match by id: presence and pose are
+     * separate questions, answered by {@code getTag} and {@code getRobotPose} respectively.
+     *
+     * <p>Cross-SDK note: the {@code id} field lives on {@code AprilTagDetection} in SDK 11 and on
+     * its {@code AprilTagSingleDetection} subclass in SDK 12. It is read reflectively so one
+     * artifact runs on both without recompilation; anything without an {@code id} field (a cluster)
+     * simply never matches.
      *
      * @param id the tag id
      * @return the detection, or empty when no single-tag detection carries that id
      */
     public Optional<AprilTagDetection> getTag(int id) {
         for (AprilTagDetection detection : getDetections()) {
-            if (detection instanceof AprilTagSingleDetection single && single.id == id) {
+            final Optional<Integer> tagId = tagIdOf(detection);
+            if (tagId.isPresent() && tagId.get().intValue() == id) {
                 return Optional.of(detection);
             }
         }
@@ -139,20 +144,21 @@ public final class AprilTagManager {
         Pose2d bestTagField = null;
         double bestRange = Double.POSITIVE_INFINITY;
         for (AprilTagDetection detection : getDetections()) {
-            if (!(detection instanceof AprilTagSingleDetection single)) {
+            final Optional<Integer> tagId = tagIdOf(detection);
+            if (!tagId.isPresent()) {
                 continue;
             }
-            if (single.ftcPose == null) {
+            if (detection.ftcPose == null) {
                 continue;
             }
-            final Optional<Pose2d> tagField = layout.tagPose(single.id);
-            if (tagField.isEmpty()) {
+            final Optional<Pose2d> tagField = layout.tagPose(tagId.get().intValue());
+            if (!tagField.isPresent()) {
                 continue;
             }
-            if (single.ftcPose.range < bestRange) {
-                bestPose = single.ftcPose;
+            if (detection.ftcPose.range < bestRange) {
+                bestPose = detection.ftcPose;
                 bestTagField = tagField.get();
-                bestRange = single.ftcPose.range;
+                bestRange = detection.ftcPose.range;
             }
         }
         if (bestPose == null || bestTagField == null) {
@@ -160,6 +166,27 @@ public final class AprilTagManager {
         }
         final Transform2d robotToTag = cameraOffset.plus(cameraToTag(bestPose));
         return Optional.of(bestTagField.transformBy(robotToTag.inverse()));
+    }
+
+    /**
+     * Reads a detection's tag id across FTC SDK versions.
+     *
+     * <p>SDK 11 declares {@code id} on {@code AprilTagDetection} itself; SDK 12 moves it to the
+     * {@code AprilTagSingleDetection} subclass while cluster detections carry no id at all. A
+     * reflective read keeps this artifact loadable and runnable on both: stock 11.1 robot projects
+     * need no Gradle upgrades, and 12.x clusters fall through to empty (skipped) rather than
+     * failing linkage on a class that does not exist on older runtimes.
+     *
+     * @param detection the detection to inspect
+     * @return the tag id, or empty when the detection carries none (a cluster)
+     */
+    static Optional<Integer> tagIdOf(AprilTagDetection detection) {
+        try {
+            return Optional.of(
+                    Integer.valueOf(detection.getClass().getField("id").getInt(detection)));
+        } catch (NoSuchFieldException | IllegalAccessException | SecurityException e) {
+            return Optional.empty();
+        }
     }
 
     /**

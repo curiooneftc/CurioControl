@@ -1,7 +1,7 @@
 # Project Setup
 
 > Status: this page describes the target v1.0.0 layout. The v0.1.0 release implements a subset of
-> the API; see [the phases document](../PHASES.md) for exactly what exists in which release.
+> the API; see [the phases document](../../PHASES.md) for exactly what exists in which release.
 
 ## The Gradle template
 
@@ -17,29 +17,25 @@ plugins {
 
 android {
     namespace = "org.curioone.robot"
-    compileSdk = 34
+    // Keep whatever the FTC template sets — CurioControl is Java 8 bytecode and needs no
+    // language or compileSdk upgrade. These are the stock v11.1 values.
+    compileSdk = 30
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
     }
 }
 
 repositories {
-    mavenCentral()
-    google()
-    maven {
-        url = uri("https://maven.pkg.github.com/curiooneftc/CurioControl")
-        credentials {
-            username = providers.gradleProperty("github.actor").orNull
-            password = providers.gradleProperty("github.token").orNull
-        }
-    }
+    // The stock template already declares mavenCentral() and google(). This is the only
+    // CurioControl-specific repository, and it needs no credentials.
+    maven { url = uri("https://jitpack.io") }
 }
 
 dependencies {
-    // Pin an exact version. Competition code must be reproducible.
-    implementation("org.curioone:curiocontrol:0.1.0")
+    // Pin an exact release tag. Competition code must be reproducible.
+    implementation("com.github.curiooneftc:CurioControl:v0.5.0")
 }
 ```
 
@@ -93,6 +89,6 @@ See [robot configuration](../guides/robot-config.md) for the full pattern.
 | Task | Command |
 |---|---|
 | Build and deploy | `./gradlew :TeamCode:assembleDebug` in your robot project |
-| Try the framework from source | `./gradlew publishToMavenLocal` in CurioControl, then depend on `0.1.0-SNAPSHOT` locally |
+| Try the framework from source | `./gradlew publishToMavenLocal` in CurioControl, then depend on `0.5.0` from `mavenLocal()` |
 
 Only do the second while developing CurioControl itself. Competition code pins a released version.

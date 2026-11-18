@@ -1,71 +1,74 @@
 # Installation
 
 > Status: this page describes the target v1.0.0 setup. The v0.1.0 release implements a subset of
-> the API; see [the phases document](../PHASES.md) for exactly what exists in which release.
+> the API; see [the phases document](../../PHASES.md) for exactly what exists in which release.
 
-## 1. Add the repository
+## 1. Add the repository and dependency in TeamCode
 
-CurioControl is distributed through GitHub Packages. Add the repository to your robot project's
-`settings.gradle.kts` (or `build.gradle.kts`, depending on your template):
+CurioControl's public releases are served by [JitPack](https://jitpack.io/). It builds a release
+directly from its Git tag, so teams need **no GitHub account, token, or other credentials**.
 
-```kotlin
-dependencyResolutionManagement {
-    repositories {
-        mavenCentral()
-        google()
-        maven {
-            url = uri("https://maven.pkg.github.com/curiooneftc/CurioControl")
-            credentials {
-                username = providers.gradleProperty("github.actor").orNull
-                password = providers.gradleProperty("github.token").orNull
-            }
-        }
-    }
+For a stock FTC project, the only CurioControl-specific edit is in `TeamCode/build.gradle`:
+
+```groovy
+repositories {
+    maven { url 'https://jitpack.io' }
 }
-```
 
-`google()` is required because the FTC SDK depends on `androidx` artifacts.
-
-## 2. Add the dependency
-
-```kotlin
 dependencies {
-    implementation("org.curioone:curiocontrol:0.1.0")
+    implementation project(':FtcRobotController')
+    implementation 'com.github.curiooneftc:CurioControl:v0.5.0'
 }
 ```
 
-**Always pin an exact version.** Never use `latest`, a `+` range, or a snapshot of an unreleased
-branch — competition robot code has to be reproducible (`spec.md` §36).
+`google()` and `mavenCentral()` are already declared by the stock project template. If a custom
+project sets `FAIL_ON_PROJECT_REPOS`, Gradle will reject the module-level repository; in that case,
+move the JitPack line into `settings.gradle.kts` and leave only the dependency in `TeamCode`.
 
-## 3. Provide a read token
+!!! note "Why not GitHub Packages?"
+    Maintainers still publish to GitHub Packages from CI, but that registry can require a token for
+    consumers. JitPack keeps team robot builds credential-free.
 
-Anonymous read access works only if the package has been made public in the repository settings.
-Otherwise, supply a **read-only** personal access token. Do not commit it.
+## 2. Pin an exact release tag
 
-Put it in `~/.gradle/gradle.properties` on your own machine:
+Use the exact release **tag**, including the leading `v`. Do not use `main-SNAPSHOT`, a commit
+hash, `latest`, a `+` range, or an unreleased branch in competition code — reproducibility matters
+more than convenience (`spec.md` §36).
 
-```properties
-github.actor=<your-github-username>
-github.token=<read-only-token>
+```groovy
+implementation 'com.github.curiooneftc:CurioControl:v0.5.0'
 ```
 
-Or supply it from the environment in CI:
+## 3. On a stock FtcRobotController fork
+
+Nothing else changes. No Gradle, AGP, `compileSdk`, or Java upgrade is required: CurioControl is
+Java 8 bytecode compiled against FTC SDK 11.1, which is what the stock fork already uses. The only
+change is the `TeamCode/build.gradle` block above.
+
+For local CurioControl development, add `mavenLocal()` to that same `repositories` block instead
+and run `./gradlew publishToMavenLocal` in this repository. The local artifact uses the stable
+coordinates `org.curioone:curiocontrol:0.5.0`; JitPack uses the Git-based coordinates shown above.
+Both SDK 11.1 and 12.x paths are verified; see the
+[compatibility reference](../reference/compatibility.md).
+
+## 4. Verify the resolution
+
+A successful dependency resolve is enough — there is no authentication step:
 
 ```bash
-export GITHUB_TOKEN=<read-only-token>
+./gradlew :TeamCode:dependencies --configuration releaseRuntimeClasspath
 ```
 
-!!! warning "Never commit credentials"
-    Tokens in a version-controlled file are a security incident, not a convenience. See
-    [`spec.md` §44](../spec.md) and [the release strategy](../RELEASE_STRATEGY.md).
+Look for `com.github.curiooneftc:CurioControl:v0.5.0`. The first build of a tag may take a few
+minutes while JitPack builds it; later builds are cached. If it fails, see the
+[troubleshooting guide](../guides/troubleshooting.md).
 
-## 4. Check the compatibility matrix
+## 5. Check the compatibility matrix
 
-Every CurioControl release pins a specific FTC SDK version. Make sure it matches the Robot
-Controller version you run in the room — a mismatch is a documented incompatibility, not something
-to discover during a match.
-
-See the [compatibility reference](compatibility.md).
+CurioControl is compiled against FTC SDK 11.1 and ships Java 8 bytecode, so it runs on the stock
+fork and on 12.x without toolchain changes. Check the
+[compatibility reference](../reference/compatibility.md) for the verified combinations before you
+compete — a newer SDK than the baseline is supported, an older one is not.
 
 ## What's next
 

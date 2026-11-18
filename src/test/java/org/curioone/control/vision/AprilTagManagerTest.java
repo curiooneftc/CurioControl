@@ -13,12 +13,9 @@ import org.curioone.control.math.Pose2d;
 import org.curioone.control.math.Rotation2d;
 import org.curioone.control.math.Transform2d;
 import org.curioone.control.math.Vector2d;
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-import org.firstinspires.ftc.vision.apriltag.AprilTagClusterDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagPoseFtc;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
-import org.firstinspires.ftc.vision.apriltag.AprilTagSingleDetection;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -51,9 +48,10 @@ class AprilTagManagerTest {
     }
 
     /** Builds a single-tag detection, leaving the untouched fields null. */
-    private static AprilTagSingleDetection detection(int id, AprilTagPoseFtc pose) {
-        return new AprilTagSingleDetection(
-                id, 0, 0.0f, null, null, null, pose, null, null, 0L, DistanceUnit.INCH);
+    private static AprilTagDetection detection(int id, AprilTagPoseFtc pose) {
+        // SDK 11 constructor: (id, hamming, decisionMargin, center, corners, metadata,
+        // ftcPose, rawPose, robotPose, frameAcquisitionNanoTime).
+        return new AprilTagDetection(id, 0, 0.0f, null, null, null, pose, null, null, 0L);
     }
 
     private void givenDetections(AprilTagDetection... detections) {
@@ -80,16 +78,19 @@ class AprilTagManagerTest {
             final Optional<AprilTagDetection> found = tags.getTag(21);
 
             assertTrue(found.isPresent());
-            assertEquals(21, ((AprilTagSingleDetection) found.get()).id);
+            assertEquals(21, found.get().id);
             assertTrue(tags.getTag(22).isEmpty());
         }
 
         @Test
-        @DisplayName("a cluster detection never matches an id")
-        void clusterNeverMatches() {
-            givenDetections(Mockito.mock(AprilTagClusterDetection.class));
-
-            assertTrue(tags.getTag(20).isEmpty());
+        @DisplayName("the cross-SDK id read returns the detection's id")
+        void idReadReturnsId() {
+            // AprilTagManager reads the id reflectively so one artifact runs on SDK 11
+            // (id on AprilTagDetection) and SDK 12 (id on the Single subclass, absent on
+            // clusters). On this 11.1 classpath every detection carries the field.
+            assertEquals(
+                    Integer.valueOf(20),
+                    AprilTagManager.tagIdOf(detection(20, solved(0.0, 24.0, 0.0, 24.0))).get());
         }
 
         @Test
@@ -185,12 +186,14 @@ class AprilTagManagerTest {
         void unusableYieldsEmpty() {
             final TagFieldLayout layout =
                     TagFieldLayout.of(Map.of(20, Pose2d.fromHeading(0.0, 24.0, Math.PI)));
-            // Unknown tag, unsolved tag, NaN range, and a cluster: none usable.
+            // Unknown tag, unsolved tag, and NaN range: none usable. (SDK 12 cluster
+            // detections are likewise skipped — they carry no id field, so the reflective
+            // read in tagIdOf yields empty — but no cluster class exists on this 11.1
+            // compile classpath to construct one.)
             givenDetections(
                     detection(21, solved(0.0, 24.0, 0.0, 24.0)),
                     detection(20, null),
-                    detection(20, solved(0.0, 24.0, 0.0, Double.NaN)),
-                    Mockito.mock(AprilTagClusterDetection.class));
+                    detection(20, solved(0.0, 24.0, 0.0, Double.NaN)));
 
             assertTrue(tags.getRobotPose(layout, CENTERED_CAMERA).isEmpty());
         }

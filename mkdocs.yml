@@ -71,6 +71,7 @@ nav:
       - Odometry: guides/odometry.md
       - Robot config: guides/robot-config.md
       - Telemetry and logging: guides/telemetry-and-logging.md
+      - Troubleshooting: guides/troubleshooting.md
   - Concepts:
       - Architecture: concepts/architecture.md
       - Philosophy: concepts/philosophy.md

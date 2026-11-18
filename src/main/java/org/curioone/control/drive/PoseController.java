@@ -34,21 +34,89 @@ public final class PoseController {
      * Robot-frame drive powers in {@code [-1, 1]}: strafe right, forward, and rotation where
      * positive is counter-clockwise, matching {@link MecanumDrive#mecanum}.
      *
-     * @param strafe rightward power
-     * @param forward forward power
-     * @param rotation rotational power
+     * <p>A final class with the same value semantics as a record, written out for Java 8
+     * compatibility: the stock FTC Robot Controller project compiles with {@code
+     * sourceCompatibility 1.8}, so record syntax cannot appear in the published artifact.
      */
-    public record DriveSignal(double strafe, double forward, double rotation) {
+    public static final class DriveSignal {
+        private final double strafe;
+        private final double forward;
+        private final double rotation;
+
         /**
          * Creates a drive signal, saturating each component to its power limit.
          *
          * <p>Saturation preserves direction intent the way arrival from far away should: full speed
          * toward the target, easing off as the error closes, with no impossible command in between.
+         *
+         * @param strafe rightward power
+         * @param forward forward power
+         * @param rotation rotational power
          */
-        public DriveSignal {
-            strafe = Range.clampPower(strafe);
-            forward = Range.clampPower(forward);
-            rotation = Range.clampPower(rotation);
+        public DriveSignal(double strafe, double forward, double rotation) {
+            this.strafe = Range.clampPower(strafe);
+            this.forward = Range.clampPower(forward);
+            this.rotation = Range.clampPower(rotation);
+        }
+
+        /**
+         * Returns the rightward power.
+         *
+         * @return the rightward power, in {@code [-1, 1]}
+         */
+        public double strafe() {
+            return strafe;
+        }
+
+        /**
+         * Returns the forward power.
+         *
+         * @return the forward power, in {@code [-1, 1]}
+         */
+        public double forward() {
+            return forward;
+        }
+
+        /**
+         * Returns the rotational power.
+         *
+         * @return the rotational power, in {@code [-1, 1]}
+         */
+        public double rotation() {
+            return rotation;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (this == other) {
+                return true;
+            }
+            if (!(other instanceof DriveSignal)) {
+                return false;
+            }
+            final DriveSignal that = (DriveSignal) other;
+            return Double.compare(strafe, that.strafe) == 0
+                    && Double.compare(forward, that.forward) == 0
+                    && Double.compare(rotation, that.rotation) == 0;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = Double.hashCode(strafe);
+            result = 31 * result + Double.hashCode(forward);
+            result = 31 * result + Double.hashCode(rotation);
+            return result;
+        }
+
+        @Override
+        public String toString() {
+            return "DriveSignal[strafe="
+                    + strafe
+                    + ", forward="
+                    + forward
+                    + ", rotation="
+                    + rotation
+                    + "]";
         }
     }
 

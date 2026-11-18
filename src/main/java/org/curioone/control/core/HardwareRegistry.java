@@ -64,7 +64,11 @@ public final class HardwareRegistry {
             throw new IllegalArgumentException("source must not be null");
         }
         this.source = source;
-        this.sdkMap = source instanceof SdkHardwareSource sdk ? sdk.hardwareMap() : null;
+        HardwareMap found = null;
+        if (source instanceof SdkHardwareSource) {
+            found = ((SdkHardwareSource) source).hardwareMap();
+        }
+        this.sdkMap = found;
     }
 
     /**

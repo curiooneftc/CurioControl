@@ -1,0 +1,6 @@
+# JitPack builds public Git tags anonymously, so robot projects can add CurioControl with no
+# GitHub token. The publication coordinates are set in build.gradle.kts when JITPACK=true.
+jdk:
+  - openjdk17
+install:
+  - ./gradlew clean build publishToMavenLocal --stacktrace

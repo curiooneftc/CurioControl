@@ -17,7 +17,7 @@ The full set, with status, is in
 | [005](005-hardware-abstraction.md) | Wrapper, not interface, hardware abstraction | Accepted |
 | [006](006-telemetry-api.md) | Fluent `add(...).update()` telemetry API | Accepted |
 | [007](007-logging-defaults.md) | Logging disabled by default, CSV to RC storage | Accepted |
-| [008](008-publishing-target.md) | Publishing to GitHub Packages first | Accepted |
+| [008](008-publishing-target.md) | Publishing target | Accepted; amended for credential-free public reads |
 | [009](009-time-injection.md) | Time injection via a `Clock` interface | Accepted |
 | [010](010-architecture-tests.md) | Architecture rules enforced by tests | Accepted |
 | [011](011-vision-is-optional.md) | Vision is lazy and optional | Accepted |

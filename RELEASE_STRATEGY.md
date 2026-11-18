@@ -21,7 +21,7 @@ CurioControl uses **Semantic Versioning** (`MAJOR.MINOR.PATCH`).
 | Version | Meaning | API stability |
 |---------|---------|---------------|
 | `0.x.y` | Development | **Unstable.** Any release may break API. |
-| `0.x.y` | Published to GitHub Packages | Teams may use it; pin exact versions. |
+| `0.x.y` | Published from a Git tag and served by JitPack | Teams may use it; pin exact tags. |
 
 All `0.x` releases are published so a team can adopt incrementally, but the API may change without a major bump. The `0.MINOR` component is effectively the "breaking" counter pre-1.0.
 
@@ -52,7 +52,7 @@ FTC competition code must be **reproducible**. During a competition season, avoi
 
 ## 3. Release Types
 
-| Type | Triggered by | Published to GitHub Packages? | GitHub Release? | CHANGELOG? |
+| Type | Triggered by | Published? | GitHub Release? | CHANGELOG? |
 |------|--------------|-------------------------------|-----------------|------------|
 | **Snapshot / dev** | Every merge to `main` | No (Develocity cache only) | No | No |
 | **Pre-release** | End of a phase, pre-1.0 | Yes, tagged `-rc.N` optionally | Draft | Yes |
@@ -112,30 +112,30 @@ CurioConfig.VERSION  // e.g. "1.2.0"
 
 ## 6. Publishing Pipeline
 
-### 6.1 Target repository
-- **Primary:** GitHub Packages (`https://maven.pkg.github.com/curiooneftc/CurioControl`)
-- **Future:** Maven Central (post-v1.0.0, once the project is stable and has a public announcement)
+### 6.1 Distribution channels
+- **Public consumer channel:** JitPack (`https://jitpack.io`), built from the release tag. No
+  credentials are required to resolve an artifact.
+- **Maintainer publishing target:** GitHub Packages
+  (`https://maven.pkg.github.com/curiooneftc/CurioControl`), using the scoped Actions token.
+- **Future:** Maven Central (post-v1.0.0, once the project is stable and has a public announcement).
 
 ### 6.2 Consuming dependency (team robot projects)
 
-```kotlin
-// settings.gradle.kts
-dependencyResolutionManagement {
-    repositories {
-        google()
-        mavenCentral()
-        maven {
-            url = uri("https://maven.pkg.github.com/curiooneftc/CurioControl")
-            credentials {
-                username = providers.gradleProperty("github.actor").orNull
-                password = providers.gradleProperty("github.token").orNull
-            }
-        }
-    }
+```groovy
+// TeamCode/build.gradle — the only CurioControl-specific edit in a stock FTC fork.
+repositories {
+    maven { url 'https://jitpack.io' }
+}
+
+dependencies {
+    implementation project(':FtcRobotController')
+    implementation 'com.github.curiooneftc:CurioControl:v0.5.0'
 }
 ```
 
-For a public repo, GitHub Packages allows anonymous read for public packages when configured; otherwise a read-only token is supplied via Gradle properties. For competition robots on a school network, a **read-only** PAT is recommended (see §9).
+There is no `credentials` block and no token to configure. `build.gradle.kts` switches the Maven
+publication to `com.github.curiooneftc:CurioControl:<VERSION>` when `JITPACK=true`; outside JitPack
+the coordinates remain `org.curioone:curiocontrol:<version>`.
 
 ### 6.3 Publishing (from CurioControl CI)
 Publishing is **manual-approved** and only runs from `main` on a version tag:
@@ -147,7 +147,8 @@ Publishing is **manual-approved** and only runs from `main` on a version tag:
    - Generates and uploads sources + javadoc JARs
    - `publish` to GitHub Packages with a `GITHUB_TOKEN` scoped to `packages: write`
    - Creates a GitHub Release from the tag with notes from `CHANGELOG.md`
-3. Never publish from a fork PR. Never commit credentials.
+3. The same tag is the public JitPack version; JitPack builds it on first request.
+4. Never publish from a fork PR. Never commit credentials.
 
 ### 6.4 Artifacts published per release
 - `curiocontrol-<version>.jar` (main)
@@ -163,26 +164,30 @@ Every release documents the exact toolchain. The matrix is stored in
 [`docs/reference/compatibility.md`](./docs/reference/compatibility.md) and reproduced in each
 GitHub Release.
 
-| CurioControl | FTC SDK | Android SDK | Java | Gradle |
-|--------------|----------|-------------|------|--------|
-| 0.1.0 | 12.0.0 | 34 | 17 | 8.14.5 |
-| 0.2.0 | 12.0.0 | 34 | 17 | 8.14.5 |
-| 0.3.0 | 12.0.0 | 34 | 17 | 8.14.5 |
-| 0.4.0 | 12.0.0 | 34 | 17 | 8.14.5 |
-| 1.0.0 | 12.0.0 | 34 | 17 | 8.14.5 |
+| CurioControl | FTC SDK (baseline) | Android SDK | Library Java | Build JDK | Gradle |
+|--------------|-------------------|-------------|--------------|-----------|--------|
+| 0.1.0 | 12.0.0 | 34 | 17 | 17 | 8.14.5 |
+| 0.2.0 | 12.0.0 | 34 | 17 | 17 | 8.14.5 |
+| 0.3.x | 12.0.0 | 34 | 17 | 17 | 8.14.5 |
+| 0.5.0 | 11.1.0 | 30 | 8 | 17 | 8.14.5 |
+| 1.0.0 (target) | 11.1.0 | 30 | 8 | 17 | 8.14.5 |
 
-> The FTC SDK version was **pinned in Phase 0 to `12.0.0`** (ADR-001), the latest release
-> published to Maven Central. Rows below `0.1.0` assume the team stays on that SDK; if the
-> team's Robot Controller is upgraded first, the row is updated at that release.
+> From the next release the FTC SDK is pinned to the **oldest supported** version, `11.1.0`, and
+> the library is published as Java 8 bytecode. That is what lets a stock `FtcRobotController` fork
+> (Gradle 8.9, AGP 8.7.0, compileSdk 30, Java 8) add the dependency without any toolchain upgrade.
+> The artifact is verified on 11.1.0 and 12.0.0; see
+> [`docs/reference/compatibility.md`](./docs/reference/compatibility.md).
 >
 > The FTC SDK version is pinned in exactly one place, `gradle/libs.versions.toml` under
 > `[versions] ftcSdk`. Nothing else in the build hardcodes it.
 
 ### Compatibility policy
-- CurioControl explicitly supports the FTC SDK version used by the team's Robot Controller project.
-- A CurioControl release that requires a newer SDK than the team uses is a **documented
-  incompatibility**; teams must stay on a compatible CurioControl version.
-- Breaking the minimum SDK requirement is a **MAJOR** change.
+- CurioControl supports a **range** of FTC SDK versions: compiled against the baseline, verified on
+  the newest tested release. A release that raises the minimum SDK is a **MAJOR** change.
+- The published artifact must load on a stock FTC project: Java 8 bytecode, no SDK classes bundled,
+  no Gradle/AGP/compileSdk requirement beyond what the stock fork already has.
+- A compatibility claim is only recorded after a real stock-fork build, not inferred from the
+  compile classpath.
 
 ---
 
@@ -202,7 +207,8 @@ GitHub Release.
 - [ ] Bump version in build file(s) and `CurioConfig.VERSION`
 - [ ] Create and push annotated tag `vX.Y.Z`
 - [ ] `release.yml` publishes to GitHub Packages
-- [ ] Verify artifact resolves in a scratch project
+- [ ] Verify `com.github.curiooneftc:CurioControl:vX.Y.Z` resolves from JitPack in a scratch project
+      with no credentials
 - [ ] GitHub Release created with notes + compatibility table
 - [ ] Merge `main → develop` (sync)
 
@@ -218,7 +224,8 @@ GitHub Release.
 
 - **Never** commit GitHub tokens, PATs, or passwords to the repository.
 - Publishing uses the ephemeral `GITHUB_TOKEN` provided by Actions (scoped `packages: write`).
-- Consumers store read tokens in `~/.gradle/gradle.properties` or CI secrets — never in version-controlled files.
+- Consumers need **no credentials**: public releases resolve from JitPack. There are no read-token
+  instructions to copy into robot projects.
 - `.gitignore` must cover `local.properties`, `*.keystore`, `gradle.properties` (if it holds secrets), and build outputs.
 - The library makes **no network calls at runtime** and transmits **no robot data** externally. This is a hard architectural constraint, not just a policy.
 - Dependabot enabled to catch FTC SDK / library CVEs.

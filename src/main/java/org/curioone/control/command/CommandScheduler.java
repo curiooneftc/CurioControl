@@ -1,6 +1,7 @@
 package org.curioone.control.command;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -145,12 +146,28 @@ public final class CommandScheduler {
     }
 
     /**
-     * Runs one scheduler pass: cancellations, schedules, executions, then defaults.
+     * Ends every command immediately, for OpMode shutdown.
      *
-     * <p>Call once per OpMode loop, in the same place every loop — before or after the subsystem
-     * updates, but consistently. A command's {@code execute} sees the freshest sensor values when
-     * the scheduler runs after the subsystems that produce them.
+     * <p>{@link #cancelAll()} is staged because cancelling from inside a command hook must not
+     * mutate the running set mid-pass. At shutdown there is no next pass, so staging would leave
+     * commands running: this clears the staged queues, ends every running command with {@code
+     * end(true)}, and drops all default commands.
+     *
+     * <p>Call once when the OpMode stops. The scheduler remains usable afterwards.
      */
+    public void close() {
+        toSchedule.clear();
+        toCancel.clear();
+        finished.clear();
+        defaults.clear();
+        final List<Command> running = new ArrayList<>(scheduled);
+        scheduled.clear();
+        startNanos.clear();
+        for (Command command : running) {
+            command.end(true);
+        }
+    }
+
     /**
      * Runs one scheduler pass: cancellations, schedules, executions, then defaults.
      *
@@ -280,7 +297,7 @@ public final class CommandScheduler {
      * @return an unmodifiable copy of the running set
      */
     public List<Command> scheduledCommands() {
-        return List.copyOf(scheduled);
+        return Collections.unmodifiableList(new ArrayList<>(scheduled));
     }
 
     /**

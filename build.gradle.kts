@@ -17,11 +17,16 @@ plugins {
 }
 
 group = "org.curioone"
-version = "0.3.3"
+version = "0.5.0"
 
 description = "CurioControl — a modular control and development framework for FIRST Tech Challenge robots."
 
 // --- Toolchain -----------------------------------------------------------------
+// Build JDK 17 (auto-provisioned), but the published library targets Java 8 bytecode so a
+// stock FtcRobotController fork (Java 8, compileSdk 30, SDK 11.1) consumes it with no Gradle
+// upgrades: no sourceCompatibility bump, no desugaring flags, no SDK bump. `--release 8` on
+// compileJava is the enforcement — any Java 9+ API or language feature in src/main fails the
+// build rather than shipping a jar the stock app cannot load.
 java {
     toolchain {
         languageVersion =
@@ -31,6 +36,8 @@ java {
                     .toInt(),
             )
     }
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
     withSourcesJar()
     withJavadocJar()
 }
@@ -178,9 +185,16 @@ tasks.named<ProcessResources>("processResources") {
 }
 
 // --- Compilation ---------------------------------------------------------------
+// Main targets Java 8 bytecode for stock-fork compatibility (see above). Tests stay on the
+// build JDK: they use modern helpers (List.of, Map.of) and run on a desktop JVM, never on the
+// robot, so constraining them to 8 buys nothing.
 tasks.withType<JavaCompile>().configureEach {
     options.encoding = "UTF-8"
     options.compilerArgs.addAll(listOf("-Xlint:all", "-Xlint:-processing", "-Werror"))
+}
+
+tasks.named<JavaCompile>("compileJava") {
+    options.release.set(8)
 }
 
 tasks.withType<Javadoc>().configureEach {
@@ -188,7 +202,13 @@ tasks.withType<Javadoc>().configureEach {
         encoding = "UTF-8"
         charSet = "UTF-8"
         docEncoding = "UTF-8"
-        addStringOption("Xdoclint:all,-missing", "-quiet")
+        // `all` includes `missing`: every public/protected declaration needs a doc comment, and
+        // every documented method needs @param/@return/@throws. A gap blocks the build instead of
+        // drifting into a release.
+        addStringOption("Xdoclint:all", "-quiet")
+        // Links to the current JDK docs: the java.util/Apollo APIs used here exist in every
+        // release from 8 on, and this URL serves the element-list Javadoc needs. (The bare
+        // /javase/8/ URL redirects and fails the build under -Werror.)
         links("https://docs.oracle.com/en/java/javase/17/docs/api/")
         // Treat Javadoc warnings as errors so a malformed doc comment blocks the build.
         addBooleanOption("Werror", true)
@@ -299,12 +319,27 @@ spotless {
 }
 
 // --- Publishing ----------------------------------------------------------------
+// JitPack builds public Git tags directly and serves them without consumer credentials. Its
+// coordinates are always com.github.<owner>:<repository>:<tag>, so `publishToMavenLocal` installs
+// them under those names while a JitPack build runs. Normal publishing keeps the stable
+// org.curioone:curiocontrol coordinates used by GitHub Packages and mavenLocal development.
+val jitpackBuild = providers.environmentVariable("JITPACK").orNull == "true"
+val publicationGroupId = if (jitpackBuild) "com.github.curiooneftc" else "org.curioone"
+val publicationArtifactId = if (jitpackBuild) "CurioControl" else "curiocontrol"
+val publicationVersion =
+    if (jitpackBuild) {
+        providers.environmentVariable("VERSION").orNull ?: project.version.toString()
+    } else {
+        project.version.toString()
+    }
+
 publishing {
     publications {
         create<MavenPublication>("maven") {
             from(components["java"])
-            groupId = "org.curioone"
-            artifactId = "curiocontrol"
+            groupId = publicationGroupId
+            artifactId = publicationArtifactId
+            version = publicationVersion
 
             pom {
                 name = "CurioControl"

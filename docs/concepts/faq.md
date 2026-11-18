@@ -65,8 +65,9 @@ A disabled logger costs effectively nothing.
 ## Does the library make network calls?
 
 No. The library makes no network calls at runtime and transmits no robot data externally. The only
-network access anywhere in the project is the build fetching dependencies, and the CI pipeline
-publishing to GitHub Packages.
+network access anywhere in the project is the build fetching dependencies — Maven Central, Google,
+and JitPack for teams — and CI publishing releases for maintainers. Adding CurioControl to a robot
+project needs no credentials.
 
 ## Why Gradle and not the FTC SDK's own build?
 

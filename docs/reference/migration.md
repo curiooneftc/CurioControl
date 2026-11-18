@@ -22,12 +22,13 @@ Public APIs are stable. A breaking change requires a major version and a section
 ## Always pin an exact version
 
 ```kotlin
-implementation("org.curioone:curiocontrol:0.1.0")   // good
+implementation("com.github.curiooneftc:CurioControl:v0.1.0")   // good
 ```
 
 ```kotlin
-implementation("org.curioone:curiocontrol:latest")   // bad
-implementation("org.curioone:curiocontrol:+")       // bad
+implementation("com.github.curiooneftc:CurioControl:main-SNAPSHOT") // bad
+implementation("com.github.curiooneftc:CurioControl:latest")        // bad
+implementation("com.github.curiooneftc:CurioControl:+")            // bad
 ```
 
 Competition robot code has to be reproducible. A floating version breaks that guarantee in a way

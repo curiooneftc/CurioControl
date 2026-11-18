@@ -85,6 +85,15 @@ jobs:
             See `CHANGELOG.md` for the full list of changes and
             `docs/reference/compatibility.md` for the toolchain matrix.
 
+            Add CurioControl in `TeamCode/build.gradle` with no token:
+
+            ```groovy
+            repositories { maven { url 'https://jitpack.io' } }
+            dependencies {
+                implementation 'com.github.curiooneftc:CurioControl:${{ github.ref_name }}'
+            }
+            ```
+
             CurioControl is pre-1.0. Pin an exact version; the API may change between
             minor releases.
         env:

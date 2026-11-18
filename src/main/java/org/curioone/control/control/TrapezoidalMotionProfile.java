@@ -85,22 +85,92 @@ public final class TrapezoidalMotionProfile {
     /**
      * The reference state at one instant: position, velocity, and acceleration together.
      *
-     * @param position the reference position
-     * @param velocity the reference velocity, signed with the direction of travel
-     * @param acceleration the reference acceleration, signed with the direction of travel
+     * <p>A final class with the same value semantics as a record, written out for Java 8
+     * compatibility: the stock FTC Robot Controller project compiles with {@code
+     * sourceCompatibility 1.8}, so record syntax cannot appear in the published artifact.
      */
-    public record State(double position, double velocity, double acceleration) {
+    public static final class State {
+        private final double position;
+        private final double velocity;
+        private final double acceleration;
+
         /**
          * Creates a reference state.
          *
+         * @param position the reference position
+         * @param velocity the reference velocity, signed with the direction of travel
+         * @param acceleration the reference acceleration, signed with the direction of travel
          * @throws IllegalArgumentException if any component is not finite
          */
-        public State {
+        public State(double position, double velocity, double acceleration) {
             if (!Double.isFinite(position)
                     || !Double.isFinite(velocity)
                     || !Double.isFinite(acceleration)) {
                 throw new IllegalArgumentException("state components must be finite");
             }
+            this.position = position;
+            this.velocity = velocity;
+            this.acceleration = acceleration;
+        }
+
+        /**
+         * Returns the reference position.
+         *
+         * @return the reference position
+         */
+        public double position() {
+            return position;
+        }
+
+        /**
+         * Returns the reference velocity, signed with the direction of travel.
+         *
+         * @return the reference velocity
+         */
+        public double velocity() {
+            return velocity;
+        }
+
+        /**
+         * Returns the reference acceleration, signed with the direction of travel.
+         *
+         * @return the reference acceleration
+         */
+        public double acceleration() {
+            return acceleration;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (this == other) {
+                return true;
+            }
+            if (!(other instanceof State)) {
+                return false;
+            }
+            final State that = (State) other;
+            return Double.compare(position, that.position) == 0
+                    && Double.compare(velocity, that.velocity) == 0
+                    && Double.compare(acceleration, that.acceleration) == 0;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = Double.hashCode(position);
+            result = 31 * result + Double.hashCode(velocity);
+            result = 31 * result + Double.hashCode(acceleration);
+            return result;
+        }
+
+        @Override
+        public String toString() {
+            return "State[position="
+                    + position
+                    + ", velocity="
+                    + velocity
+                    + ", acceleration="
+                    + acceleration
+                    + "]";
         }
     }
 

@@ -50,9 +50,14 @@ class SystemClockTest {
     @Test
     @DisplayName("can be shared, being stateless")
     void isStateless() {
+        // JaCoCo-instrumented classes carry coverage members (e.g. $jacocoData), which are not
+        // framework state: ignore those, or the suite goes red under coverage for no reason.
+        final long ownFields =
+                java.util.Arrays.stream(SystemClock.class.getDeclaredFields())
+                        .filter(f -> !f.isSynthetic() && !f.getName().startsWith("$jacoco"))
+                        .count();
         assertTrue(
-                Modifier.isFinal(SystemClock.class.getModifiers())
-                        && SystemClock.class.getDeclaredFields().length == 0,
+                Modifier.isFinal(SystemClock.class.getModifiers()) && ownFields == 0,
                 "SystemClock must hold no state for sharing between controllers to be safe");
     }
 

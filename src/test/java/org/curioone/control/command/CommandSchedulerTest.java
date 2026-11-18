@@ -199,6 +199,48 @@ class CommandSchedulerTest {
 
             assertTrue(command.events().isEmpty());
         }
+
+        @Test
+        @DisplayName("close ends running commands immediately, without another pass")
+        void closeEndsRunningCommands() {
+            final RecordingCommand command = new RecordingCommand("work");
+
+            scheduler.schedule(command);
+            scheduler.run();
+            scheduler.close();
+
+            assertEquals(List.of("init-work", "exec-work", "end-work:true"), command.events());
+            assertTrue(scheduler.scheduledCommands().isEmpty());
+        }
+
+        @Test
+        @DisplayName("close drops staged commands and default commands")
+        void closeDropsStagedAndDefaults() {
+            final Subsystem drive = subsystem();
+            final RecordingCommand staged = new RecordingCommand("staged");
+            final RecordingCommand hold = new RecordingCommand("hold", drive);
+            scheduler.setDefaultCommand(drive, hold);
+            scheduler.schedule(staged);
+
+            scheduler.close();
+
+            assertTrue(staged.events().isEmpty(), "a staged command must never start");
+            assertTrue(scheduler.scheduledCommands().isEmpty());
+            scheduler.run();
+            assertTrue(hold.events().isEmpty(), "close must drop default commands");
+        }
+
+        @Test
+        @DisplayName("the scheduler remains usable after close")
+        void reusableAfterClose() {
+            scheduler.close();
+
+            final RecordingCommand command = new RecordingCommand("work", () -> true);
+            scheduler.schedule(command);
+            scheduler.run();
+
+            assertEquals(List.of("init-work", "exec-work", "end-work:false"), command.events());
+        }
     }
 
     @Nested

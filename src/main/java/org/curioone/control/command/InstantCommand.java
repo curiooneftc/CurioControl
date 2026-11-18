@@ -1,6 +1,8 @@
 package org.curioone.control.command;
 
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.Set;
 import org.curioone.control.core.Subsystem;
 
@@ -88,6 +90,6 @@ public final class InstantCommand implements Command {
                 throw new IllegalArgumentException("requirements must not contain null");
             }
         }
-        return Set.copyOf(Arrays.asList(requirements));
+        return Collections.unmodifiableSet(new LinkedHashSet<>(Arrays.asList(requirements)));
     }
 }

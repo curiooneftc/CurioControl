@@ -150,7 +150,7 @@ The front door. Sections:
 Target length: one screen for the quickstart; the rest is navigational.
 
 ### 5.2 Getting Started
-- **installation.md** — add the dependency block, GitHub Packages access (incl. read-only token setup), Gradle template.
+- **installation.md** — add the JitPack repository and pinned dependency in `TeamCode/build.gradle`, with no read-token setup.
 - **quickstart.md** — smallest robot that moves: a mecanum base + `MainTeleOp`. Explicitly mirrors SPEC §41.
 - **project-setup.md** — full Gradle config, `repositories`, `RobotConfig` layout, where things go.
 - **first-teleop.md** — narrative tutorial: hardware config in the RC app, wiring, code, deploy, run.
